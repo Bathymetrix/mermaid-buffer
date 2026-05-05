@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "buffmaid"
+version = "0.1.0"
+description = "Convert raw MERMAID circular-buffer int32 waveform files to MiniSEED."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [
+  { name = "Joel D. Simon", email = "jdsimon@bathymetrix.com" }
+]
+dependencies = [
+  "numpy",
+  "obspy"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest"
+]
+
+[project.scripts]
+buffmaid = "buffmaid.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
