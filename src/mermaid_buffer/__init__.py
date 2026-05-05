@@ -4,9 +4,9 @@
 # Author: Joel D. Simon <jdsimon@bathymetrix.com>
 # SPDX-License-Identifier: MIT
 
-"""Convert raw MERMAID circular-buffer waveform files to MiniSEED."""
+"""Convert raw MERMAID circular-buffer waveform files to miniSEED."""
 
-from buffmaid.convert import SAMPLING_RATE_HZ
+from mermaid_buffer.convert import SAMPLING_RATE_HZ
 
 __author__ = "Joel D. Simon"
 __license__ = "MIT"

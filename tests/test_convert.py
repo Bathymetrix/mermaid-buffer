@@ -3,8 +3,8 @@ from pathlib import Path
 import numpy as np
 from obspy import UTCDateTime, read
 
-from buffmaid.cli import build_parser
-from buffmaid.convert import (
+from mermaid_buffer.cli import build_parser
+from mermaid_buffer.convert import (
     SAMPLING_RATE_HZ,
     SegmentInfo,
     build_trace,
@@ -88,7 +88,7 @@ def test_convert_help_lists_metadata_defaults(capsys):
     parser = build_parser()
 
     try:
-        parser.parse_args(["convert", "--help"])
+        parser.parse_args(["--help"])
     except SystemExit as exc:
         assert exc.code == 0
 

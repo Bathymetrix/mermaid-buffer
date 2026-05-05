@@ -1,8 +1,6 @@
-# buffmaid
+# mermaid-buffer
 
-`buffmaid` means **MERMAID BUFFer autoMAID**.
-
-It is a small, standalone converter for semi-continuous raw MERMAID circular-buffer waveform data. The job is intentionally narrow: read raw binary waveform files and write one miniSEED file per input file.
+`mermaid-buffer` is a small, standalone converter for semi-continuous raw MERMAID circular-buffer waveform data. The v0 command reads raw binary waveform files and writes one miniSEED file per input file.
 
 ## What It Converts
 
@@ -19,7 +17,7 @@ There is no file header, and no extension is required. The filename is the UTC s
 2018-11-03T10_53_50
 ```
 
-Directory layout can already be organized by time. `buffmaid` discovers files recursively:
+Directory layout can already be organized by time. The converter discovers files recursively:
 
 ```text
 2018-09/2018-09-13/2018-09-13T19_25_10.925000
@@ -32,11 +30,11 @@ The sampling rate is fixed for all data:
 40.01406 Hz
 ```
 
-`buffmaid` does not use `40 Hz` as a default or fallback.
+The converter does not use `40 Hz` as a default or fallback.
 
 ## What It Does Not Do
 
-`buffmaid` does not do time correction, event analysis, DET/REQ logic, interpolation, gap filling, trace merging, or continuity forcing. It also does not import from or imitate `mermaid-records` parsing/normalization architecture, and it does not add switches or special cases to `automaid`.
+`mermaid-buffer` does not do time correction, event analysis, DET/REQ logic, interpolation, gap filling, trace merging, or continuity forcing. It also does not import from or imitate `mermaid-records` parsing/normalization architecture, and it does not add switches or special cases to `automaid`.
 
 ## Install
 
@@ -53,7 +51,7 @@ python -m pip install -e ".[dev]"
 ## Usage
 
 ```bash
-buffmaid convert \
+buffer2mseed \
   --input-root /path/to/raw/files \
   --output-root /path/to/mseed/output \
   --station P0023
@@ -62,7 +60,7 @@ buffmaid convert \
 Full option form:
 
 ```bash
-buffmaid convert \
+buffer2mseed \
   --input-root /path/to/raw/files \
   --output-root /path/to/mseed/output \
   --station P0023 \
@@ -74,7 +72,7 @@ buffmaid convert \
 CLI help:
 
 ```bash
-buffmaid convert --help
+buffer2mseed --help
 ```
 
 ## CLI Options
@@ -108,7 +106,7 @@ The raw input files have no header or metadata, so `--network`, `--station`, `--
 For example:
 
 ```bash
-buffmaid convert \
+buffer2mseed \
   --input-root raw \
   --output-root mseed \
   --station P0023 \
@@ -133,10 +131,10 @@ miniSEED metadata is written with ObsPy. The data quality indicator is set expli
 
 ## Transition Log
 
-Even though waveform files are written one-to-one, `buffmaid` sorts discovered input files by parsed start time and logs every transition between consecutive segments:
+Even though waveform files are written one-to-one, the converter sorts discovered input files by parsed start time and logs every transition between consecutive segments:
 
 ```text
-buffmaid_transition_records.jsonl
+buffer2mseed_transition_records.jsonl
 ```
 
 Each record includes the previous file, next file, start times, sample counts, expected next start time, delta in seconds and samples, and a transition kind:

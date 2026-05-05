@@ -17,7 +17,7 @@ ADJACENCY_TOLERANCE_SECONDS = 0.5 / SAMPLING_RATE_HZ
 DEFAULT_NETWORK = "MH"
 DEFAULT_LOCATION = "10"
 DEFAULT_CHANNEL = "BHZ"
-DEFAULT_TRANSITION_LOG_NAME = "buffmaid_transition_records.jsonl"
+DEFAULT_TRANSITION_LOG_NAME = "buffer2mseed_transition_records.jsonl"
 
 
 @dataclass(frozen=True)
@@ -96,7 +96,7 @@ def make_output_path(
     location: str = DEFAULT_LOCATION,
     channel: str = DEFAULT_CHANNEL,
 ) -> Path:
-    """Build the flat MiniSEED output path for one source file."""
+    """Build the flat miniSEED output path for one source file."""
 
     source_timestamp = Path(input_path).name
     filename = f"{network}.{station}.{location}.{channel}.{source_timestamp}.mseed"
@@ -111,7 +111,7 @@ def build_trace(
     location: str = DEFAULT_LOCATION,
     channel: str = DEFAULT_CHANNEL,
 ) -> Trace:
-    """Create an ObsPy Trace with buffmaid MiniSEED metadata."""
+    """Create an ObsPy Trace with miniSEED metadata."""
 
     trace = Trace(data=np.asarray(samples, dtype=RAW_DTYPE))
     trace.stats.network = network
@@ -132,7 +132,7 @@ def convert_segment(
     location: str = DEFAULT_LOCATION,
     channel: str = DEFAULT_CHANNEL,
 ) -> Path:
-    """Convert one raw waveform segment to one MiniSEED file."""
+    """Convert one raw waveform segment to one miniSEED file."""
 
     samples = read_raw_samples(segment.path)
     if len(samples) != segment.npts:

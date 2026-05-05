@@ -3,9 +3,9 @@ requires = ["setuptools>=69", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "buffmaid"
+name = "mermaid-buffer"
 version = "0.1.0"
-description = "Convert raw MERMAID circular-buffer int32 waveform files to MiniSEED."
+description = "Convert raw MERMAID circular-buffer int32 waveform files to miniSEED."
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
@@ -23,7 +23,7 @@ dev = [
 ]
 
 [project.scripts]
-buffmaid = "buffmaid.cli:main"
+buffer2mseed = "mermaid_buffer.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
