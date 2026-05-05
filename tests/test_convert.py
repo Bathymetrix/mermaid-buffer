@@ -3,6 +3,7 @@ from pathlib import Path
 import numpy as np
 from obspy import UTCDateTime, read
 
+from buffmaid.cli import build_parser
 from buffmaid.convert import (
     SAMPLING_RATE_HZ,
     SegmentInfo,
@@ -81,6 +82,21 @@ def test_mseed_metadata_includes_dataquality_r(tmp_path):
     assert written.stats.station == "P0023"
     assert written.stats.location == "10"
     assert written.stats.channel == "BHZ"
+
+
+def test_convert_help_lists_metadata_defaults(capsys):
+    parser = build_parser()
+
+    try:
+        parser.parse_args(["convert", "--help"])
+    except SystemExit as exc:
+        assert exc.code == 0
+
+    help_text = capsys.readouterr().out
+    assert "--network NETWORK" in help_text
+    assert "(default: MH)" in help_text
+    assert "(default: 10)" in help_text
+    assert "(default: BHZ)" in help_text
 
 
 def _segment(name: str, starttime: UTCDateTime, npts: int) -> SegmentInfo:

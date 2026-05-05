@@ -20,23 +20,58 @@ from buffmaid.convert import (
 )
 
 
+class _DefaultsHelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
+    def _get_help_string(self, action: argparse.Action) -> str:
+        if action.default is None:
+            return action.help or ""
+        return super()._get_help_string(action)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="buffmaid",
-        description="Convert raw MERMAID circular-buffer int32 waveform files to MiniSEED.",
+        description="Convert raw MERMAID circular-buffer int32 waveform files to miniSEED.",
+        formatter_class=_DefaultsHelpFormatter,
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     convert_parser = subparsers.add_parser(
         "convert",
-        help="convert raw int32 waveform files to MiniSEED",
+        help="convert raw int32 waveform files to miniSEED",
+        formatter_class=_DefaultsHelpFormatter,
     )
-    convert_parser.add_argument("--input-root", required=True, type=Path)
-    convert_parser.add_argument("--output-root", required=True, type=Path)
-    convert_parser.add_argument("--station", required=True)
-    convert_parser.add_argument("--network", default=DEFAULT_NETWORK)
-    convert_parser.add_argument("--location", default=DEFAULT_LOCATION)
-    convert_parser.add_argument("--channel", default=DEFAULT_CHANNEL)
+    convert_parser.add_argument(
+        "--input-root",
+        required=True,
+        type=Path,
+        help="root directory to recursively search for raw binary input files",
+    )
+    convert_parser.add_argument(
+        "--output-root",
+        required=True,
+        type=Path,
+        help="directory for flat output .mseed files and the transition JSONL log",
+    )
+    convert_parser.add_argument(
+        "--station",
+        required=True,
+        help="station code to write into every output trace and filename",
+    )
+    convert_parser.add_argument(
+        "--network",
+        default=DEFAULT_NETWORK,
+        help="network code to write into every output trace and filename",
+    )
+    convert_parser.add_argument(
+        "--location",
+        default=DEFAULT_LOCATION,
+        help="location code to write into every output trace and filename",
+    )
+    convert_parser.add_argument(
+        "--channel",
+        default=DEFAULT_CHANNEL,
+        help="channel code to write into every output trace and filename",
+    )
     convert_parser.set_defaults(func=_convert_command)
 
     return parser
