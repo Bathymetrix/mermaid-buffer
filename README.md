@@ -57,6 +57,15 @@ buffer2mseed \
   --station P0023
 ```
 
+Short option form:
+
+```bash
+buffer2mseed \
+  -i /path/to/raw/files \
+  -o /path/to/mseed/output \
+  -S P0023
+```
+
 Full option form:
 
 ```bash
@@ -77,27 +86,27 @@ buffer2mseed --help
 
 ## CLI Options
 
-`--input-root INPUT_ROOT`
+`-i, --input-root INPUT_ROOT`
 
 Root directory to search recursively for raw binary input files. Every discovered regular file is interpreted as one raw `<i4` waveform file whose filename is its UTC start time.
 
-`--output-root OUTPUT_ROOT`
+`-o, --output-root OUTPUT_ROOT`
 
 Directory where output `.mseed` files and the transition JSONL log are written. Output waveform files are written flat into this directory.
 
-`--station STATION`
+`-S, --station STATION`
 
 Required station code, for example `P0023`. This is written to `trace.stats.station` and included in the output filename.
 
-`--network NETWORK`
+`-N, --network NETWORK`
 
 Network code. Default: `MH`. This is written to `trace.stats.network` and included in the output filename.
 
-`--location LOCATION`
+`-L, --location LOCATION`
 
 Location code. Default: `10`. This is written to `trace.stats.location` and included in the output filename.
 
-`--channel CHANNEL`
+`-C, --channel CHANNEL`
 
 Channel code. Default: `BHZ`. This is written to `trace.stats.channel` and included in the output filename.
 

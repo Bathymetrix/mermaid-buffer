@@ -93,10 +93,43 @@ def test_convert_help_lists_metadata_defaults(capsys):
         assert exc.code == 0
 
     help_text = capsys.readouterr().out
-    assert "--network NETWORK" in help_text
+    assert "-i INPUT_ROOT, --input-root INPUT_ROOT" in help_text
+    assert "-o OUTPUT_ROOT, --output-root OUTPUT_ROOT" in help_text
+    assert "-S STATION, --station STATION" in help_text
+    assert "-N NETWORK, --network NETWORK" in help_text
+    assert "-L LOCATION, --location LOCATION" in help_text
+    assert "-C CHANNEL, --channel CHANNEL" in help_text
     assert "(default: MH)" in help_text
     assert "(default: 10)" in help_text
     assert "(default: BHZ)" in help_text
+
+
+def test_convert_parser_accepts_short_options(tmp_path):
+    parser = build_parser()
+
+    args = parser.parse_args(
+        [
+            "-i",
+            str(tmp_path / "in"),
+            "-o",
+            str(tmp_path / "out"),
+            "-S",
+            "P0023",
+            "-N",
+            "XX",
+            "-L",
+            "00",
+            "-C",
+            "BDF",
+        ]
+    )
+
+    assert args.input_root == tmp_path / "in"
+    assert args.output_root == tmp_path / "out"
+    assert args.station == "P0023"
+    assert args.network == "XX"
+    assert args.location == "00"
+    assert args.channel == "BDF"
 
 
 def _segment(name: str, starttime: UTCDateTime, npts: int) -> SegmentInfo:

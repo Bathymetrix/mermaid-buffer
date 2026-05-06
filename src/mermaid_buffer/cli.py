@@ -34,33 +34,39 @@ def build_parser() -> argparse.ArgumentParser:
         formatter_class=_DefaultsHelpFormatter,
     )
     parser.add_argument(
+        "-i",
         "--input-root",
         required=True,
         type=Path,
         help="root directory to recursively search for raw binary input files",
     )
     parser.add_argument(
+        "-o",
         "--output-root",
         required=True,
         type=Path,
         help="directory for flat output .mseed files and the transition JSONL log",
     )
     parser.add_argument(
+        "-S",
         "--station",
         required=True,
         help="station code to write into every output trace and filename",
     )
     parser.add_argument(
+        "-N",
         "--network",
         default=DEFAULT_NETWORK,
         help="network code to write into every output trace and filename",
     )
     parser.add_argument(
+        "-L",
         "--location",
         default=DEFAULT_LOCATION,
         help="location code to write into every output trace and filename",
     )
     parser.add_argument(
+        "-C",
         "--channel",
         default=DEFAULT_CHANNEL,
         help="channel code to write into every output trace and filename",
