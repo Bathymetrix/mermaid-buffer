@@ -26,6 +26,18 @@ class _DefaultsHelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
             return action.help or ""
         return super()._get_help_string(action)
 
+    def _format_action_invocation(self, action: argparse.Action) -> str:
+        if not action.option_strings:
+            return super()._format_action_invocation(action)
+
+        option_strings = ", ".join(action.option_strings)
+        if action.nargs == 0:
+            return option_strings
+
+        default_metavar = self._get_default_metavar_for_optional(action)
+        args_string = self._format_args(action, default_metavar)
+        return f"{option_strings} {args_string}"
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(

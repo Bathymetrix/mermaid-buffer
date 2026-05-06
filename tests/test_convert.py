@@ -93,12 +93,12 @@ def test_convert_help_lists_metadata_defaults(capsys):
         assert exc.code == 0
 
     help_text = capsys.readouterr().out
-    assert "-i INPUT_ROOT, --input-root INPUT_ROOT" in help_text
-    assert "-o OUTPUT_ROOT, --output-root OUTPUT_ROOT" in help_text
-    assert "-S STATION, --station STATION" in help_text
-    assert "-N NETWORK, --network NETWORK" in help_text
-    assert "-L LOCATION, --location LOCATION" in help_text
-    assert "-C CHANNEL, --channel CHANNEL" in help_text
+    assert "-i, --input-root INPUT_ROOT" in help_text
+    assert "-o, --output-root OUTPUT_ROOT" in help_text
+    assert "-S, --station STATION" in help_text
+    assert "-N, --network NETWORK" in help_text
+    assert "-L, --location LOCATION" in help_text
+    assert "-C, --channel CHANNEL" in help_text
     assert "(default: MH)" in help_text
     assert "(default: 10)" in help_text
     assert "(default: BHZ)" in help_text
