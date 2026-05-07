@@ -18,7 +18,7 @@ RAW_DTYPE = np.dtype("<i4")
 
 DEFAULT_NETWORK = "MH"
 DEFAULT_LOCATION = "20"
-DEFAULT_CHANNEL = "BHZ"
+DEFAULT_CHANNEL = "BDH"
 DEFAULT_DATA_QUALITY = "R"
 DEFAULT_TRANSITION_LOG_NAME = "buffer2mseed_transition_records.jsonl"
 DEFAULT_SKIPPED_LOG_NAME = "buffer2mseed_skipped_files.jsonl"

@@ -77,7 +77,7 @@ buffer2mseed \
   --sampling-frequency 40.01406 \
   --station P0023 \
   --network MH \
-  --channel BHZ \
+  --channel BDH \
   --location 20 \
   --data_quality R
 ```
@@ -112,7 +112,7 @@ Network code. Default: `MH`. This is written to `trace.stats.network` and includ
 
 `-c, --channel CHANNEL`
 
-Channel code. Default: `BHZ`. This is written to `trace.stats.channel` and included in the output filename.
+Channel code. Default: `BDH`. This is written to `trace.stats.channel` and included in the output filename.
 The channel code must be exactly three alphanumeric characters. Its first letter
 is validated as a SEED band code for the selected sampling frequency. At the
 default `40.01406 Hz`, `B` and `S` are valid while a channel such as `MHZ` is
@@ -161,7 +161,7 @@ The converter rewrites the output files it owns when the same output filename al
 Each accepted input binary file produces exactly one output `.mseed` file. Output filenames use SNCL plus the original source timestamp string:
 
 ```text
-MH.P0023.20.BHZ.2018-12-06T03_06_14.450000.mseed
+MH.P0023.20.BDH.2018-12-06T03_06_14.450000.mseed
 ```
 
 miniSEED metadata is written with ObsPy. The data quality indicator is set explicitly from `--data_quality`, which defaults to `R`.
@@ -169,7 +169,7 @@ miniSEED metadata is written with ObsPy. The data quality indicator is set expli
 The CLI prints one progress line as each output is written, followed by a concise run summary:
 
 ```text
-[1/12] 2018-11-03T10_53_50 -> MH.P0023.20.BHZ.2018-11-03T10_53_50.mseed
+[1/12] 2018-11-03T10_53_50 -> MH.P0023.20.BDH.2018-11-03T10_53_50.mseed
 Processed 12 file(s); skipped 2 file(s).
 ```
 

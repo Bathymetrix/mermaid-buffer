@@ -44,7 +44,7 @@ def test_output_filename_generation(tmp_path):
         station="P0023",
     )
 
-    assert outpath == tmp_path / "MH.P0023.20.BHZ.2018-12-06T03_06_14.450000.mseed"
+    assert outpath == tmp_path / "MH.P0023.20.BDH.2018-12-06T03_06_14.450000.mseed"
 
 
 def test_reading_little_endian_int32_binary_data(tmp_path):
@@ -115,7 +115,7 @@ def test_band_code_uses_corner_period_when_sample_rate_is_ambiguous():
 
 
 def test_channel_code_validation_rejects_invalid_band_code():
-    assert validate_channel_code("bhz", SAMPLING_RATE_HZ) == "BHZ"
+    assert validate_channel_code("bdh", SAMPLING_RATE_HZ) == "BDH"
     assert validate_channel_code("SHZ", SAMPLING_RATE_HZ) == "SHZ"
     assert validate_channel_code("MHZ", 5.0) == "MHZ"
 
@@ -167,7 +167,7 @@ def test_mseed_metadata_includes_dataquality_r(tmp_path):
     assert written.stats.network == "MH"
     assert written.stats.station == "P0023"
     assert written.stats.location == "20"
-    assert written.stats.channel == "BHZ"
+    assert written.stats.channel == "BDH"
     assert written.stats.sampling_rate == pytest.approx(SAMPLING_RATE_HZ)
 
 
@@ -218,7 +218,7 @@ def test_convert_help_lists_metadata_defaults(capsys):
     assert "--data_quality INDICATOR" in help_text
     assert "(default: MH)" in help_text
     assert "(default: 20)" in help_text
-    assert "(default: BHZ)" in help_text
+    assert "(default: BDH)" in help_text
     assert "(default: 40.01406)" in help_text
     assert "(default: R)" in help_text
 
@@ -424,11 +424,11 @@ def test_cli_prints_processed_and_skipped_counts(tmp_path, capsys):
 
     stdout = capsys.readouterr().out
     assert (
-        "[1/2] 2018-11-03T10_53_50 -> MH.P0023.20.BHZ.2018-11-03T10_53_50.mseed"
+        "[1/2] 2018-11-03T10_53_50 -> MH.P0023.20.BDH.2018-11-03T10_53_50.mseed"
         in stdout
     )
     assert (
-        "[2/2] 2018-11-03T10_53_51 -> MH.P0023.20.BHZ.2018-11-03T10_53_51.mseed"
+        "[2/2] 2018-11-03T10_53_51 -> MH.P0023.20.BDH.2018-11-03T10_53_51.mseed"
         in stdout
     )
     assert "Processed 2 file(s); skipped 1 file(s)." in stdout

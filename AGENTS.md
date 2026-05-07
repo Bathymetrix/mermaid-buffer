@@ -47,7 +47,7 @@ buffer2mseed --input-root INPUT_ROOT --output-root OUTPUT_ROOT --sampling-freque
 - Defaults:
   - network: `MH`
   - location: `20`
-  - channel: `BHZ`
+  - channel: `BDH`
   - data quality: `R`
   - sampling frequency: `40.01406`
 - Channel codes are supplied by the user or defaulted. They must be exactly three alphanumeric characters.
@@ -91,7 +91,7 @@ NETWORK.STATION.LOCATION.CHANNEL.SOURCE_TIMESTAMP.mseed
 - Default example:
 
 ```text
-MH.P0023.20.BHZ.2018-12-06T03_06_14.450000.mseed
+MH.P0023.20.BDH.2018-12-06T03_06_14.450000.mseed
 ```
 
 - Transition log filename:
