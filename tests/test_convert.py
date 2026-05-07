@@ -34,7 +34,7 @@ def test_output_filename_generation(tmp_path):
         station="P0023",
     )
 
-    assert outpath == tmp_path / "MH.P0023.10.BHZ.2018-12-06T03_06_14.450000.mseed"
+    assert outpath == tmp_path / "MH.P0023.20.BHZ.2018-12-06T03_06_14.450000.mseed"
 
 
 def test_reading_little_endian_int32_binary_data(tmp_path):
@@ -80,7 +80,7 @@ def test_mseed_metadata_includes_dataquality_r(tmp_path):
     assert written.stats.mseed.dataquality == "R"
     assert written.stats.network == "MH"
     assert written.stats.station == "P0023"
-    assert written.stats.location == "10"
+    assert written.stats.location == "20"
     assert written.stats.channel == "BHZ"
 
 
@@ -100,7 +100,7 @@ def test_convert_help_lists_metadata_defaults(capsys):
     assert "-L, --location LOCATION" in help_text
     assert "-C, --channel CHANNEL" in help_text
     assert "(default: MH)" in help_text
-    assert "(default: 10)" in help_text
+    assert "(default: 20)" in help_text
     assert "(default: BHZ)" in help_text
 
 

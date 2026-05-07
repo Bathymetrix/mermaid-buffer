@@ -42,7 +42,7 @@ buffer2mseed --input-root INPUT_ROOT --output-root OUTPUT_ROOT --station STATION
 
 - Defaults:
   - network: `MH`
-  - location: `10`
+  - location: `20`
   - channel: `BHZ`
 
 ## Conversion Rules
@@ -72,7 +72,7 @@ NETWORK.STATION.LOCATION.CHANNEL.SOURCE_TIMESTAMP.mseed
 - Default example:
 
 ```text
-MH.P0023.10.BHZ.2018-12-06T03_06_14.450000.mseed
+MH.P0023.20.BHZ.2018-12-06T03_06_14.450000.mseed
 ```
 
 - Transition log filename:

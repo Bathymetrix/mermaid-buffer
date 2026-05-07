@@ -74,7 +74,7 @@ buffer2mseed \
   --output-root /path/to/mseed/output \
   --station P0023 \
   --network MH \
-  --location 10 \
+  --location 20 \
   --channel BHZ
 ```
 
@@ -104,7 +104,7 @@ Network code. Default: `MH`. This is written to `trace.stats.network` and includ
 
 `-L, --location LOCATION`
 
-Location code. Default: `10`. This is written to `trace.stats.location` and included in the output filename.
+Location code. Default: `20`. This is written to `trace.stats.location` and included in the output filename.
 
 `-C, --channel CHANNEL`
 
@@ -125,7 +125,7 @@ buffer2mseed \
 writes traces with `trace.stats.channel = "BDF"` and filenames like:
 
 ```text
-MH.P0023.10.BDF.2018-12-06T03_06_14.450000.mseed
+MH.P0023.20.BDF.2018-12-06T03_06_14.450000.mseed
 ```
 
 ## Output Files
@@ -133,7 +133,7 @@ MH.P0023.10.BDF.2018-12-06T03_06_14.450000.mseed
 Each input binary file produces exactly one output `.mseed` file. Output filenames use SNCL plus the original source timestamp string:
 
 ```text
-MH.P0023.10.BHZ.2018-12-06T03_06_14.450000.mseed
+MH.P0023.20.BHZ.2018-12-06T03_06_14.450000.mseed
 ```
 
 miniSEED metadata is written with ObsPy. The data quality indicator is set explicitly to `R`.
