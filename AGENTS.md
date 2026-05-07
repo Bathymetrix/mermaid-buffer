@@ -39,6 +39,8 @@ buffer2mseed --input-root INPUT_ROOT --output-root OUTPUT_ROOT --sampling-freque
   - `-n`, `--network`
   - `-c`, `--channel`
   - `-l`, `--location`
+- Data quality option:
+  - `--data_quality`
 - Sampling frequency option aliases:
   - `-fs`, `--sampling-frequency`
 
@@ -46,9 +48,11 @@ buffer2mseed --input-root INPUT_ROOT --output-root OUTPUT_ROOT --sampling-freque
   - network: `MH`
   - location: `20`
   - channel: `BHZ`
+  - data quality: `R`
   - sampling frequency: `40.01406`
 - Channel codes are supplied by the user or defaulted. They must be exactly three alphanumeric characters.
 - Sampling frequency is supplied by the user or defaulted. It must be a positive value in Hz.
+- Data quality is supplied by the user or defaulted. It must be one of the miniSEED data quality indicators `D`, `R`, `Q`, or `M`.
 - Validate the first channel letter as a SEED waveform band code for the selected sampling frequency before conversion. At the default `40.01406 Hz`, `B` and `S` are valid; reject a code like `MHZ` with a useful error.
 - Keep band-code/channel validation importable from the package root, for example `from mermaid_buffer import band_codes_for_sample_rate`.
 
@@ -69,7 +73,7 @@ buffer2mseed --input-root INPUT_ROOT --output-root OUTPUT_ROOT --sampling-freque
 - Do not add time correction, event analysis, DET/REQ logic, interpolation, gap filling, merging, or continuity forcing.
 - Use ObsPy `Trace` and write with `trace.write(outpath, format="MSEED")`.
 - Write the selected sampling frequency to `trace.stats.sampling_rate`.
-- Set miniSEED data quality explicitly with `trace.stats.mseed = {"dataquality": "R"}`.
+- Set miniSEED data quality explicitly with `trace.stats.mseed = {"dataquality": DATA_QUALITY}`.
 
 ## Output Rules
 

@@ -9,6 +9,7 @@ from mermaid_buffer import (
     band_code,
     band_codes_for_sample_rate,
     validate_channel_code,
+    validate_data_quality_indicator,
     validate_sampling_frequency_hz,
 )
 from mermaid_buffer.cli import build_parser, main
@@ -68,6 +69,14 @@ def test_sampling_frequency_validation_rejects_invalid_values():
         validate_sampling_frequency_hz(0)
     with pytest.raises(ValueError, match="sampling_frequency_hz must be a positive finite value"):
         validate_sampling_frequency_hz("nan")
+
+
+def test_data_quality_validation_normalizes_valid_indicators():
+    assert validate_data_quality_indicator("r") == "R"
+    assert validate_data_quality_indicator(" Q ") == "Q"
+
+    with pytest.raises(ValueError, match="data_quality must be one of"):
+        validate_data_quality_indicator("X")
 
 
 def test_band_codes_for_mermaid_sampling_rate():
@@ -175,6 +184,21 @@ def test_build_trace_accepts_custom_sampling_frequency_and_channel():
     assert trace.stats.sampling_rate == pytest.approx(5.0)
 
 
+def test_build_trace_accepts_custom_data_quality(tmp_path):
+    trace = build_trace(
+        samples=np.array([1, 2, 3], dtype="<i4"),
+        starttime=UTCDateTime(2018, 12, 6, 3, 6, 14, 450000),
+        station="P0023",
+        data_quality="Q",
+    )
+    outpath = tmp_path / "metadata.mseed"
+
+    trace.write(str(outpath), format="MSEED")
+    written = read(str(outpath))[0]
+
+    assert written.stats.mseed.dataquality == "Q"
+
+
 def test_convert_help_lists_metadata_defaults(capsys):
     parser = build_parser()
 
@@ -191,10 +215,12 @@ def test_convert_help_lists_metadata_defaults(capsys):
     assert "-n, --network NETWORK" in help_text
     assert "-c, --channel CHANNEL" in help_text
     assert "-l, --location LOCATION" in help_text
+    assert "--data_quality INDICATOR" in help_text
     assert "(default: MH)" in help_text
     assert "(default: 20)" in help_text
     assert "(default: BHZ)" in help_text
     assert "(default: 40.01406)" in help_text
+    assert "(default: R)" in help_text
 
 
 def test_convert_parser_accepts_short_options(tmp_path):
@@ -216,6 +242,8 @@ def test_convert_parser_accepts_short_options(tmp_path):
             "00",
             "-fs",
             "20.0",
+            "--data_quality",
+            "Q",
         ]
     )
 
@@ -226,6 +254,7 @@ def test_convert_parser_accepts_short_options(tmp_path):
     assert args.location == "00"
     assert args.channel == "BDF"
     assert args.sampling_frequency == 20.0
+    assert args.data_quality == "Q"
 
 
 def test_convert_tree_uses_custom_sampling_frequency_for_outputs(tmp_path):
@@ -251,6 +280,23 @@ def test_convert_tree_uses_custom_sampling_frequency_for_outputs(tmp_path):
     transition_record_json = json.loads(result.transition_log_path.read_text(encoding="utf-8"))
     assert transition_record_json["kind"] == "adjacent"
     assert transition_record_json["delta_samples"] == pytest.approx(0.0)
+
+
+def test_convert_tree_uses_custom_data_quality_for_outputs(tmp_path):
+    input_root = tmp_path / "raw"
+    output_root = tmp_path / "mseed"
+    input_root.mkdir()
+    np.array([1, 2, 3, 4], dtype="<i4").tofile(input_root / "2018-11-03T10_53_50")
+
+    result = convert_tree(
+        input_root=input_root,
+        output_root=output_root,
+        station="P0023",
+        data_quality="Q",
+    )
+
+    written = read(str(result.output_paths[0]))[0]
+    assert written.stats.mseed.dataquality == "Q"
 
 
 def test_convert_tree_logs_skipped_files_without_crashing(tmp_path):
@@ -340,6 +386,32 @@ def test_cli_accepts_custom_sampling_frequency_for_channel_validation(tmp_path):
     )
 
 
+def test_cli_accepts_custom_data_quality(tmp_path):
+    input_root = tmp_path / "raw"
+    output_root = tmp_path / "mseed"
+    input_root.mkdir()
+    np.array([1, 2, 3, 4], dtype="<i4").tofile(input_root / "2018-11-03T10_53_50")
+
+    assert (
+        main(
+            [
+                "-i",
+                str(input_root),
+                "-o",
+                str(output_root),
+                "-s",
+                "P0023",
+                "--data_quality",
+                "q",
+            ]
+        )
+        == 0
+    )
+
+    written = read(str(next(output_root.glob("*.mseed"))))[0]
+    assert written.stats.mseed.dataquality == "Q"
+
+
 def test_cli_prints_processed_and_skipped_counts(tmp_path, capsys):
     input_root = tmp_path / "raw"
     output_root = tmp_path / "mseed"
@@ -378,6 +450,14 @@ def test_cli_rejects_nonpositive_sampling_frequency(capsys):
 
     assert exc.value.code == 2
     assert "sampling_frequency_hz must be a positive finite value" in capsys.readouterr().err
+
+
+def test_cli_rejects_invalid_data_quality(capsys):
+    with pytest.raises(SystemExit) as exc:
+        main(["-i", "raw", "-o", "mseed", "-s", "P0023", "--data_quality", "X"])
+
+    assert exc.value.code == 2
+    assert "data_quality must be one of" in capsys.readouterr().err
 
 
 def _segment(name: str, starttime: UTCDateTime, npts: int) -> SegmentInfo:

@@ -19,8 +19,10 @@ RAW_DTYPE = np.dtype("<i4")
 DEFAULT_NETWORK = "MH"
 DEFAULT_LOCATION = "20"
 DEFAULT_CHANNEL = "BHZ"
+DEFAULT_DATA_QUALITY = "R"
 DEFAULT_TRANSITION_LOG_NAME = "buffer2mseed_transition_records.jsonl"
 DEFAULT_SKIPPED_LOG_NAME = "buffer2mseed_skipped_files.jsonl"
+MINISEED_DATA_QUALITY_INDICATORS = ("D", "R", "Q", "M")
 
 
 @dataclass(frozen=True)
@@ -108,6 +110,19 @@ def validate_sampling_frequency_hz(sampling_frequency_hz: float) -> float:
     return frequency
 
 
+def validate_data_quality_indicator(data_quality: str) -> str:
+    """Return a normalized miniSEED data quality indicator or raise ValueError."""
+
+    normalized = data_quality.strip().upper()
+    if normalized not in MINISEED_DATA_QUALITY_INDICATORS:
+        allowed = ", ".join(MINISEED_DATA_QUALITY_INDICATORS)
+        raise ValueError(
+            "data_quality must be one of the miniSEED data quality indicators "
+            f"{allowed}; got {data_quality!r}"
+        )
+    return normalized
+
+
 def discover_segments(input_root: str | Path) -> list[SegmentInfo]:
     """Recursively discover input files and sort them by parsed UTC start time."""
 
@@ -176,11 +191,13 @@ def build_trace(
     location: str = DEFAULT_LOCATION,
     channel: str = DEFAULT_CHANNEL,
     sampling_frequency_hz: float = SAMPLING_RATE_HZ,
+    data_quality: str = DEFAULT_DATA_QUALITY,
 ) -> Trace:
     """Create an ObsPy Trace with miniSEED metadata."""
 
     frequency = validate_sampling_frequency_hz(sampling_frequency_hz)
     channel = validate_channel_code(channel, frequency)
+    data_quality = validate_data_quality_indicator(data_quality)
     trace = Trace(data=np.asarray(samples, dtype=RAW_DTYPE))
     trace.stats.network = network
     trace.stats.station = station
@@ -188,7 +205,7 @@ def build_trace(
     trace.stats.channel = channel
     trace.stats.starttime = starttime
     trace.stats.sampling_rate = frequency
-    trace.stats.mseed = {"dataquality": "R"}
+    trace.stats.mseed = {"dataquality": data_quality}
     return trace
 
 
@@ -200,11 +217,13 @@ def convert_segment(
     location: str = DEFAULT_LOCATION,
     channel: str = DEFAULT_CHANNEL,
     sampling_frequency_hz: float = SAMPLING_RATE_HZ,
+    data_quality: str = DEFAULT_DATA_QUALITY,
 ) -> Path:
     """Convert one raw waveform segment to one miniSEED file."""
 
     frequency = validate_sampling_frequency_hz(sampling_frequency_hz)
     channel = validate_channel_code(channel, frequency)
+    data_quality = validate_data_quality_indicator(data_quality)
     samples = read_raw_samples(segment.path)
     if len(samples) != segment.npts:
         raise ValueError(f"Sample count changed while converting: {segment.path}")
@@ -217,6 +236,7 @@ def convert_segment(
         location=location,
         channel=channel,
         sampling_frequency_hz=frequency,
+        data_quality=data_quality,
     )
     outpath = make_output_path(
         input_path=segment.path,
@@ -240,6 +260,7 @@ def convert_tree(
     location: str = DEFAULT_LOCATION,
     channel: str = DEFAULT_CHANNEL,
     sampling_frequency_hz: float = SAMPLING_RATE_HZ,
+    data_quality: str = DEFAULT_DATA_QUALITY,
     *,
     progress_callback: Callable[[int, int, SegmentInfo, Path], None] | None = None,
 ) -> ConversionResult:
@@ -249,6 +270,7 @@ def convert_tree(
     output_root = Path(output_root)
     frequency = validate_sampling_frequency_hz(sampling_frequency_hz)
     channel = validate_channel_code(channel, frequency)
+    data_quality = validate_data_quality_indicator(data_quality)
     output_root.mkdir(parents=True, exist_ok=True)
 
     discovery = discover_input_files(input_root)
@@ -270,6 +292,7 @@ def convert_tree(
             location=location,
             channel=channel,
             sampling_frequency_hz=frequency,
+            data_quality=data_quality,
         )
         output_paths.append(output_path)
         if progress_callback is not None:

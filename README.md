@@ -78,7 +78,8 @@ buffer2mseed \
   --station P0023 \
   --network MH \
   --channel BHZ \
-  --location 20
+  --location 20 \
+  --data_quality R
 ```
 
 CLI help:
@@ -121,13 +122,17 @@ rejected.
 
 Location code. Default: `20`. This is written to `trace.stats.location` and included in the output filename.
 
+`--data_quality INDICATOR`
+
+miniSEED data quality indicator. Default: `R`. The value is normalized to uppercase and must be one of `D`, `R`, `Q`, or `M`. This is written to `trace.stats.mseed.dataquality`.
+
 The SEED band-code helpers are importable for later reuse:
 
 ```python
 from mermaid_buffer import band_codes_for_sample_rate, validate_channel_code
 ```
 
-The raw input files have no header or metadata, so `--network`, `--station`, `--location`, and `--channel` do not select data from the input. They label every output trace produced by that run.
+The raw input files have no header or metadata, so `--network`, `--station`, `--location`, `--channel`, and `--data_quality` do not select data from the input. They label every output trace produced by that run.
 
 For example:
 
@@ -159,7 +164,7 @@ Each accepted input binary file produces exactly one output `.mseed` file. Outpu
 MH.P0023.20.BHZ.2018-12-06T03_06_14.450000.mseed
 ```
 
-miniSEED metadata is written with ObsPy. The data quality indicator is set explicitly to `R`.
+miniSEED metadata is written with ObsPy. The data quality indicator is set explicitly from `--data_quality`, which defaults to `R`.
 
 The CLI prints one progress line as each output is written, followed by a concise run summary:
 

@@ -14,10 +14,12 @@ from typing import Sequence
 
 from mermaid_buffer.convert import (
     DEFAULT_CHANNEL,
+    DEFAULT_DATA_QUALITY,
     DEFAULT_LOCATION,
     DEFAULT_NETWORK,
     SAMPLING_RATE_HZ,
     convert_tree,
+    validate_data_quality_indicator,
     validate_sampling_frequency_hz,
 )
 from mermaid_buffer.seed_codes import validate_channel_code
@@ -94,6 +96,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=DEFAULT_LOCATION,
         help="location code to write into every output trace and filename",
     )
+    parser.add_argument(
+        "--data_quality",
+        default=DEFAULT_DATA_QUALITY,
+        metavar="INDICATOR",
+        help="miniSEED data quality indicator to write into every output trace",
+    )
     parser.set_defaults(func=_convert_command)
 
     return parser
@@ -114,6 +122,7 @@ def _convert_command(args: argparse.Namespace) -> int:
         location=args.location,
         channel=args.channel,
         sampling_frequency_hz=args.sampling_frequency,
+        data_quality=args.data_quality,
         progress_callback=print_progress,
     )
     print(
@@ -132,6 +141,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         args.sampling_frequency = validate_sampling_frequency_hz(args.sampling_frequency)
         args.channel = validate_channel_code(args.channel, args.sampling_frequency)
+        args.data_quality = validate_data_quality_indicator(args.data_quality)
     except ValueError as exc:
         parser.error(str(exc))
     return args.func(args)
