@@ -145,6 +145,12 @@ writes traces with `trace.stats.channel = "BDF"` and filenames like:
 MH.P0023.20.BDF.2018-12-06T03_06_14.450000.mseed
 ```
 
+## Run Model
+
+`buffer2mseed` is stateless. Each invocation is a full-input run over the current `--input-root`; it does not keep a manifest, compare against a previous run, or incrementally decide what changed.
+
+The converter rewrites the output files it owns when the same output filename already exists, including the JSONL logs. It does not audit the output directory, delete extra files, or warn about additional incorrect or outdated files already present there. The caller is responsible for choosing appropriate input and output directories; the CLI does not enforce that they are separate.
+
 ## Output Files
 
 Each accepted input binary file produces exactly one output `.mseed` file. Output filenames use SNCL plus the original source timestamp string:

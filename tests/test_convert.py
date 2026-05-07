@@ -290,6 +290,32 @@ def test_convert_tree_logs_skipped_files_without_crashing(tmp_path):
     )
 
 
+def test_convert_tree_rewrites_expected_outputs_and_leaves_extra_files(tmp_path):
+    input_root = tmp_path / "raw"
+    output_root = tmp_path / "mseed"
+    input_root.mkdir()
+    output_root.mkdir()
+    raw_path = input_root / "2018-11-03T10_53_50"
+    extra_output = output_root / "stale-output.mseed"
+    extra_output.write_text("stale", encoding="utf-8")
+    np.array([1, 2, 3, 4], dtype="<i4").tofile(raw_path)
+
+    first_result = convert_tree(input_root=input_root, output_root=output_root, station="P0023")
+    first_output = first_result.output_paths[0]
+    np.testing.assert_array_equal(read(str(first_output))[0].data, np.array([1, 2, 3, 4]))
+    first_result.transition_log_path.write_text("stale transition\n", encoding="utf-8")
+    first_result.skipped_log_path.write_text("stale skipped\n", encoding="utf-8")
+
+    np.array([9, 8], dtype="<i4").tofile(raw_path)
+    second_result = convert_tree(input_root=input_root, output_root=output_root, station="P0023")
+
+    assert second_result.output_paths == [first_output]
+    np.testing.assert_array_equal(read(str(first_output))[0].data, np.array([9, 8]))
+    assert second_result.transition_log_path.read_text(encoding="utf-8") == ""
+    assert second_result.skipped_log_path.read_text(encoding="utf-8") == ""
+    assert extra_output.read_text(encoding="utf-8") == "stale"
+
+
 def test_cli_accepts_custom_sampling_frequency_for_channel_validation(tmp_path):
     input_root = tmp_path / "raw"
     output_root = tmp_path / "mseed"

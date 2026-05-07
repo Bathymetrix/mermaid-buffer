@@ -74,6 +74,10 @@ buffer2mseed --input-root INPUT_ROOT --output-root OUTPUT_ROOT --sampling-freque
 ## Output Rules
 
 - One input file produces exactly one output `.mseed`.
+- Conversion is stateless. Every run discovers the full current input tree.
+- Re-run conversion rewrites same-name output files and JSONL logs.
+- Do not check output directories for extra incorrect or outdated files, and do not prune them.
+- Do not enforce input/output directory separation.
 - Output filenames use:
 
 ```text
