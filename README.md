@@ -24,13 +24,13 @@ Directory layout can already be organized by time. The converter discovers files
 2018-12/2018-12-06/2018-12-06T03_06_14.450000
 ```
 
-The sampling rate is fixed for all data:
+The sampling frequency defaults to:
 
 ```text
 40.01406 Hz
 ```
 
-The converter does not use `40 Hz` as a default or fallback.
+Pass `-fs` or `--sampling-frequency` to use a different positive value in Hz. The converter does not use `40 Hz` as a default or fallback.
 
 ## What It Does Not Do
 
@@ -73,6 +73,7 @@ buffer2mseed \
   --input-root /path/to/raw/files \
   --output-root /path/to/mseed/output \
   --station P0023 \
+  --sampling-frequency 40.01406 \
   --network MH \
   --location 20 \
   --channel BHZ
@@ -98,6 +99,10 @@ Directory where output `.mseed` files and the transition JSONL log are written. 
 
 Required station code, for example `P0023`. This is written to `trace.stats.station` and included in the output filename.
 
+`-fs, --sampling-frequency HZ`
+
+Sampling frequency in Hz. Default: `40.01406`. This is written to `trace.stats.sampling_rate` and used for transition timing, adjacency tolerance, and channel band-code validation.
+
 `-N, --network NETWORK`
 
 Network code. Default: `MH`. This is written to `trace.stats.network` and included in the output filename.
@@ -110,8 +115,9 @@ Location code. Default: `20`. This is written to `trace.stats.location` and incl
 
 Channel code. Default: `BHZ`. This is written to `trace.stats.channel` and included in the output filename.
 The channel code must be exactly three alphanumeric characters. Its first letter
-is validated as a SEED band code for the fixed `40.01406 Hz` sampling rate; `B`
-and `S` are valid for this rate, while a channel such as `MHZ` is rejected.
+is validated as a SEED band code for the selected sampling frequency. At the
+default `40.01406 Hz`, `B` and `S` are valid while a channel such as `MHZ` is
+rejected.
 
 The SEED band-code helpers are importable for later reuse:
 
@@ -164,7 +170,7 @@ adjacent | gap | overlap
 Adjacency uses a tolerance of half a sample:
 
 ```text
-0.5 / 40.01406 seconds
+0.5 / sampling_frequency_hz seconds
 ```
 
 ## Development

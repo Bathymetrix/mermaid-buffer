@@ -6,7 +6,7 @@
 
 """Convert raw MERMAID circular-buffer waveform files to miniSEED."""
 
-from mermaid_buffer.convert import SAMPLING_RATE_HZ
+from mermaid_buffer.convert import SAMPLING_RATE_HZ, validate_sampling_frequency_hz
 from mermaid_buffer.seed_codes import (
     band_code,
     band_codes_for_sample_rate,
@@ -23,4 +23,5 @@ __all__ = [
     "band_code",
     "band_codes_for_sample_rate",
     "validate_channel_code",
+    "validate_sampling_frequency_hz",
 ]

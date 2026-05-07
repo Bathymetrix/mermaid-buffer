@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import json
+from math import isfinite
 from pathlib import Path
 from typing import Iterable
 
@@ -14,7 +15,6 @@ from mermaid_buffer.seed_codes import validate_channel_code
 
 SAMPLING_RATE_HZ = 40.01406
 RAW_DTYPE = np.dtype("<i4")
-ADJACENCY_TOLERANCE_SECONDS = 0.5 / SAMPLING_RATE_HZ
 
 DEFAULT_NETWORK = "MH"
 DEFAULT_LOCATION = "20"
@@ -73,6 +73,22 @@ def count_raw_samples(path: str | Path) -> int:
     return file_size // item_size
 
 
+def validate_sampling_frequency_hz(sampling_frequency_hz: float) -> float:
+    """Return a positive sampling frequency in Hz or raise ValueError."""
+
+    try:
+        frequency = float(sampling_frequency_hz)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(
+            f"sampling_frequency_hz must be a positive finite value; got {sampling_frequency_hz!r}"
+        ) from exc
+    if not isfinite(frequency) or frequency <= 0:
+        raise ValueError(
+            f"sampling_frequency_hz must be a positive finite value; got {sampling_frequency_hz!r}"
+        )
+    return frequency
+
+
 def discover_segments(input_root: str | Path) -> list[SegmentInfo]:
     """Recursively discover input files and sort them by parsed UTC start time."""
 
@@ -97,10 +113,12 @@ def make_output_path(
     network: str = DEFAULT_NETWORK,
     location: str = DEFAULT_LOCATION,
     channel: str = DEFAULT_CHANNEL,
+    sampling_frequency_hz: float = SAMPLING_RATE_HZ,
 ) -> Path:
     """Build the flat miniSEED output path for one source file."""
 
-    channel = validate_channel_code(channel, SAMPLING_RATE_HZ)
+    frequency = validate_sampling_frequency_hz(sampling_frequency_hz)
+    channel = validate_channel_code(channel, frequency)
     source_timestamp = Path(input_path).name
     filename = f"{network}.{station}.{location}.{channel}.{source_timestamp}.mseed"
     return Path(output_root) / filename
@@ -113,17 +131,19 @@ def build_trace(
     network: str = DEFAULT_NETWORK,
     location: str = DEFAULT_LOCATION,
     channel: str = DEFAULT_CHANNEL,
+    sampling_frequency_hz: float = SAMPLING_RATE_HZ,
 ) -> Trace:
     """Create an ObsPy Trace with miniSEED metadata."""
 
-    channel = validate_channel_code(channel, SAMPLING_RATE_HZ)
+    frequency = validate_sampling_frequency_hz(sampling_frequency_hz)
+    channel = validate_channel_code(channel, frequency)
     trace = Trace(data=np.asarray(samples, dtype=RAW_DTYPE))
     trace.stats.network = network
     trace.stats.station = station
     trace.stats.location = location
     trace.stats.channel = channel
     trace.stats.starttime = starttime
-    trace.stats.sampling_rate = SAMPLING_RATE_HZ
+    trace.stats.sampling_rate = frequency
     trace.stats.mseed = {"dataquality": "R"}
     return trace
 
@@ -135,10 +155,12 @@ def convert_segment(
     network: str = DEFAULT_NETWORK,
     location: str = DEFAULT_LOCATION,
     channel: str = DEFAULT_CHANNEL,
+    sampling_frequency_hz: float = SAMPLING_RATE_HZ,
 ) -> Path:
     """Convert one raw waveform segment to one miniSEED file."""
 
-    channel = validate_channel_code(channel, SAMPLING_RATE_HZ)
+    frequency = validate_sampling_frequency_hz(sampling_frequency_hz)
+    channel = validate_channel_code(channel, frequency)
     samples = read_raw_samples(segment.path)
     if len(samples) != segment.npts:
         raise ValueError(f"Sample count changed while converting: {segment.path}")
@@ -150,6 +172,7 @@ def convert_segment(
         network=network,
         location=location,
         channel=channel,
+        sampling_frequency_hz=frequency,
     )
     outpath = make_output_path(
         input_path=segment.path,
@@ -158,6 +181,7 @@ def convert_segment(
         network=network,
         location=location,
         channel=channel,
+        sampling_frequency_hz=frequency,
     )
     outpath.parent.mkdir(parents=True, exist_ok=True)
     trace.write(str(outpath), format="MSEED")
@@ -171,16 +195,22 @@ def convert_tree(
     network: str = DEFAULT_NETWORK,
     location: str = DEFAULT_LOCATION,
     channel: str = DEFAULT_CHANNEL,
+    sampling_frequency_hz: float = SAMPLING_RATE_HZ,
 ) -> ConversionResult:
     """Convert every discovered raw waveform file under an input root."""
 
     input_root = Path(input_root)
     output_root = Path(output_root)
-    channel = validate_channel_code(channel, SAMPLING_RATE_HZ)
+    frequency = validate_sampling_frequency_hz(sampling_frequency_hz)
+    channel = validate_channel_code(channel, frequency)
     output_root.mkdir(parents=True, exist_ok=True)
 
     segments = discover_segments(input_root)
-    transition_log_path = write_transition_log(segments, output_root)
+    transition_log_path = write_transition_log(
+        segments,
+        output_root,
+        sampling_frequency_hz=frequency,
+    )
     output_paths = [
         convert_segment(
             segment=segment,
@@ -189,6 +219,7 @@ def convert_tree(
             network=network,
             location=location,
             channel=channel,
+            sampling_frequency_hz=frequency,
         )
         for segment in segments
     ]
@@ -201,22 +232,31 @@ def convert_tree(
     )
 
 
-def classify_transition(delta_seconds: float) -> str:
+def classify_transition(
+    delta_seconds: float,
+    sampling_frequency_hz: float = SAMPLING_RATE_HZ,
+) -> str:
     """Classify a transition delta as adjacent, gap, or overlap."""
 
-    if abs(delta_seconds) <= ADJACENCY_TOLERANCE_SECONDS:
+    tolerance_seconds = 0.5 / validate_sampling_frequency_hz(sampling_frequency_hz)
+    if abs(delta_seconds) <= tolerance_seconds:
         return "adjacent"
     if delta_seconds > 0:
         return "gap"
     return "overlap"
 
 
-def transition_record(previous: SegmentInfo, next_segment: SegmentInfo) -> dict[str, object]:
+def transition_record(
+    previous: SegmentInfo,
+    next_segment: SegmentInfo,
+    sampling_frequency_hz: float = SAMPLING_RATE_HZ,
+) -> dict[str, object]:
     """Build one JSON-serializable transition record."""
 
-    expected_next_starttime = previous.starttime + previous.npts / SAMPLING_RATE_HZ
+    frequency = validate_sampling_frequency_hz(sampling_frequency_hz)
+    expected_next_starttime = previous.starttime + previous.npts / frequency
     delta_seconds = float(next_segment.starttime - expected_next_starttime)
-    previous_endtime = _last_sample_time(previous)
+    previous_endtime = _last_sample_time(previous, frequency)
 
     return {
         "previous_file": str(previous.path),
@@ -228,17 +268,21 @@ def transition_record(previous: SegmentInfo, next_segment: SegmentInfo) -> dict[
         "next_npts": next_segment.npts,
         "expected_next_starttime": _format_utc(expected_next_starttime),
         "delta_seconds": delta_seconds,
-        "delta_samples": delta_seconds * SAMPLING_RATE_HZ,
-        "kind": classify_transition(delta_seconds),
+        "delta_samples": delta_seconds * frequency,
+        "kind": classify_transition(delta_seconds, frequency),
     }
 
 
-def transition_records(segments: Iterable[SegmentInfo]) -> list[dict[str, object]]:
+def transition_records(
+    segments: Iterable[SegmentInfo],
+    sampling_frequency_hz: float = SAMPLING_RATE_HZ,
+) -> list[dict[str, object]]:
     """Build transition records for consecutive sorted segments."""
 
+    frequency = validate_sampling_frequency_hz(sampling_frequency_hz)
     ordered = list(segments)
     return [
-        transition_record(previous, next_segment)
+        transition_record(previous, next_segment, frequency)
         for previous, next_segment in zip(ordered, ordered[1:])
     ]
 
@@ -247,22 +291,28 @@ def write_transition_log(
     segments: Iterable[SegmentInfo],
     output_root: str | Path,
     filename: str = DEFAULT_TRANSITION_LOG_NAME,
+    *,
+    sampling_frequency_hz: float = SAMPLING_RATE_HZ,
 ) -> Path:
     """Write canonical JSONL transition records to the output root."""
 
     outpath = Path(output_root) / filename
     outpath.parent.mkdir(parents=True, exist_ok=True)
     with outpath.open("w", encoding="utf-8") as handle:
-        for record in transition_records(segments):
+        for record in transition_records(segments, sampling_frequency_hz):
             handle.write(json.dumps(record, sort_keys=True, separators=(",", ":")))
             handle.write("\n")
     return outpath
 
 
-def _last_sample_time(segment: SegmentInfo) -> UTCDateTime:
+def _last_sample_time(
+    segment: SegmentInfo,
+    sampling_frequency_hz: float = SAMPLING_RATE_HZ,
+) -> UTCDateTime:
     if segment.npts <= 0:
         return segment.starttime
-    return segment.starttime + (segment.npts - 1) / SAMPLING_RATE_HZ
+    frequency = validate_sampling_frequency_hz(sampling_frequency_hz)
+    return segment.starttime + (segment.npts - 1) / frequency
 
 
 def _format_utc(value: UTCDateTime) -> str:

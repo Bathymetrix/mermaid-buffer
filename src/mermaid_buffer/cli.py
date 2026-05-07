@@ -18,6 +18,7 @@ from mermaid_buffer.convert import (
     DEFAULT_NETWORK,
     SAMPLING_RATE_HZ,
     convert_tree,
+    validate_sampling_frequency_hz,
 )
 from mermaid_buffer.seed_codes import validate_channel_code
 
@@ -68,6 +69,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="station code to write into every output trace and filename",
     )
     parser.add_argument(
+        "-fs",
+        "--sampling-frequency",
+        type=float,
+        default=SAMPLING_RATE_HZ,
+        metavar="HZ",
+        help="sampling frequency in Hz to write into traces and use for transition timing",
+    )
+    parser.add_argument(
         "-N",
         "--network",
         default=DEFAULT_NETWORK,
@@ -98,6 +107,7 @@ def _convert_command(args: argparse.Namespace) -> int:
         network=args.network,
         location=args.location,
         channel=args.channel,
+        sampling_frequency_hz=args.sampling_frequency,
     )
     print(f"Converted {len(result.output_paths)} file(s).")
     print(f"Output root: {result.output_root}")
@@ -109,7 +119,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     try:
-        args.channel = validate_channel_code(args.channel, SAMPLING_RATE_HZ)
+        args.sampling_frequency = validate_sampling_frequency_hz(args.sampling_frequency)
+        args.channel = validate_channel_code(args.channel, args.sampling_frequency)
     except ValueError as exc:
         parser.error(str(exc))
     return args.func(args)

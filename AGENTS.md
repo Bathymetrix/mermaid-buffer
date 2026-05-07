@@ -25,13 +25,13 @@ Guidance for coding agents working in this repository.
 - Supported command shape:
 
 ```bash
-buffer2mseed -i INPUT_ROOT -o OUTPUT_ROOT -S STATION
+buffer2mseed -i INPUT_ROOT -o OUTPUT_ROOT -S STATION -fs SAMPLING_FREQUENCY_HZ
 ```
 
 - Long options must also work:
 
 ```bash
-buffer2mseed --input-root INPUT_ROOT --output-root OUTPUT_ROOT --station STATION
+buffer2mseed --input-root INPUT_ROOT --output-root OUTPUT_ROOT --station STATION --sampling-frequency SAMPLING_FREQUENCY_HZ
 ```
 
 - Metadata option aliases:
@@ -39,13 +39,17 @@ buffer2mseed --input-root INPUT_ROOT --output-root OUTPUT_ROOT --station STATION
   - `-N`, `--network`
   - `-L`, `--location`
   - `-C`, `--channel`
+- Sampling frequency option aliases:
+  - `-fs`, `--sampling-frequency`
 
 - Defaults:
   - network: `MH`
   - location: `20`
   - channel: `BHZ`
+  - sampling frequency: `40.01406`
 - Channel codes are supplied by the user or defaulted. They must be exactly three alphanumeric characters.
-- Validate the first channel letter as a SEED waveform band code for the fixed `40.01406 Hz` sampling rate before conversion. For this rate, `B` and `S` are valid; reject a code like `MHZ` with a useful error.
+- Sampling frequency is supplied by the user or defaulted. It must be a positive value in Hz.
+- Validate the first channel letter as a SEED waveform band code for the selected sampling frequency before conversion. At the default `40.01406 Hz`, `B` and `S` are valid; reject a code like `MHZ` with a useful error.
 - Keep band-code/channel validation importable from the package root, for example `from mermaid_buffer import band_codes_for_sample_rate`.
 
 ## Conversion Rules
@@ -58,9 +62,10 @@ buffer2mseed --input-root INPUT_ROOT --output-root OUTPUT_ROOT --station STATION
   - `2018-12-06T03_06_14.450000`
   - `2018-11-03T10_53_50`
 - Recursively discover files under `--input-root`.
-- Use the fixed sampling rate constant `40.01406`. Do not use `40` as a default or fallback.
+- Use the default sampling frequency constant `40.01406`. Do not use `40` as a default or fallback.
 - Do not add time correction, event analysis, DET/REQ logic, interpolation, gap filling, merging, or continuity forcing.
 - Use ObsPy `Trace` and write with `trace.write(outpath, format="MSEED")`.
+- Write the selected sampling frequency to `trace.stats.sampling_rate`.
 - Set miniSEED data quality explicitly with `trace.stats.mseed = {"dataquality": "R"}`.
 
 ## Output Rules
@@ -85,8 +90,8 @@ buffer2mseed_transition_records.jsonl
 ```
 
 - Transition records sort discovered inputs by parsed start time and log every consecutive transition as `adjacent`, `gap`, or `overlap`.
-- Expected next start is `previous_starttime + previous_npts / 40.01406`.
-- Adjacency tolerance is `0.5 / 40.01406` seconds.
+- Expected next start is `previous_starttime + previous_npts / sampling_frequency_hz`.
+- Adjacency tolerance is `0.5 / sampling_frequency_hz` seconds.
 
 ## Verification
 

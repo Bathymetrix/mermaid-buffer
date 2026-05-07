@@ -1,15 +1,22 @@
+import json
 from pathlib import Path
 
 import numpy as np
 import pytest
 from obspy import UTCDateTime, read
 
-from mermaid_buffer import band_code, band_codes_for_sample_rate, validate_channel_code
+from mermaid_buffer import (
+    band_code,
+    band_codes_for_sample_rate,
+    validate_channel_code,
+    validate_sampling_frequency_hz,
+)
 from mermaid_buffer.cli import build_parser, main
 from mermaid_buffer.convert import (
     SAMPLING_RATE_HZ,
     SegmentInfo,
     build_trace,
+    convert_tree,
     make_output_path,
     parse_starttime_from_filename,
     read_raw_samples,
@@ -52,6 +59,15 @@ def test_reading_little_endian_int32_binary_data(tmp_path):
 
 def test_fixed_sampling_rate_constant():
     assert SAMPLING_RATE_HZ == 40.01406
+
+
+def test_sampling_frequency_validation_rejects_invalid_values():
+    assert validate_sampling_frequency_hz("5.0") == 5.0
+
+    with pytest.raises(ValueError, match="sampling_frequency_hz must be a positive finite value"):
+        validate_sampling_frequency_hz(0)
+    with pytest.raises(ValueError, match="sampling_frequency_hz must be a positive finite value"):
+        validate_sampling_frequency_hz("nan")
 
 
 def test_band_codes_for_mermaid_sampling_rate():
@@ -112,6 +128,21 @@ def test_transition_classification_adjacent_gap_overlap():
     assert overlap["kind"] == "overlap"
 
 
+def test_transition_record_uses_custom_sampling_frequency():
+    start = UTCDateTime(2018, 12, 6, 3, 6, 14, 450000)
+    previous = _segment("previous", start, 10)
+    expected_next = start + 10 / 20.0
+
+    record = transition_record(
+        previous,
+        _segment("adjacent", expected_next + 0.5 / 20.0, 5),
+        sampling_frequency_hz=20.0,
+    )
+
+    assert record["kind"] == "adjacent"
+    assert record["delta_samples"] == pytest.approx(0.5)
+
+
 def test_mseed_metadata_includes_dataquality_r(tmp_path):
     trace = build_trace(
         samples=np.array([1, 2, 3], dtype="<i4"),
@@ -128,6 +159,20 @@ def test_mseed_metadata_includes_dataquality_r(tmp_path):
     assert written.stats.station == "P0023"
     assert written.stats.location == "20"
     assert written.stats.channel == "BHZ"
+    assert written.stats.sampling_rate == pytest.approx(SAMPLING_RATE_HZ)
+
+
+def test_build_trace_accepts_custom_sampling_frequency_and_channel():
+    trace = build_trace(
+        samples=np.array([1, 2, 3], dtype="<i4"),
+        starttime=UTCDateTime(2018, 12, 6, 3, 6, 14, 450000),
+        station="P0023",
+        channel="MHZ",
+        sampling_frequency_hz=5.0,
+    )
+
+    assert trace.stats.channel == "MHZ"
+    assert trace.stats.sampling_rate == pytest.approx(5.0)
 
 
 def test_convert_help_lists_metadata_defaults(capsys):
@@ -145,9 +190,11 @@ def test_convert_help_lists_metadata_defaults(capsys):
     assert "-N, --network NETWORK" in help_text
     assert "-L, --location LOCATION" in help_text
     assert "-C, --channel CHANNEL" in help_text
+    assert "-fs, --sampling-frequency HZ" in help_text
     assert "(default: MH)" in help_text
     assert "(default: 20)" in help_text
     assert "(default: BHZ)" in help_text
+    assert "(default: 40.01406)" in help_text
 
 
 def test_convert_parser_accepts_short_options(tmp_path):
@@ -167,6 +214,8 @@ def test_convert_parser_accepts_short_options(tmp_path):
             "00",
             "-C",
             "BDF",
+            "-fs",
+            "20.0",
         ]
     )
 
@@ -176,6 +225,56 @@ def test_convert_parser_accepts_short_options(tmp_path):
     assert args.network == "XX"
     assert args.location == "00"
     assert args.channel == "BDF"
+    assert args.sampling_frequency == 20.0
+
+
+def test_convert_tree_uses_custom_sampling_frequency_for_outputs(tmp_path):
+    input_root = tmp_path / "raw"
+    output_root = tmp_path / "mseed"
+    input_root.mkdir()
+    np.array([1, 2, 3, 4], dtype="<i4").tofile(input_root / "2018-11-03T10_53_50")
+    np.array([5, 6], dtype="<i4").tofile(input_root / "2018-11-03T10_53_50.800000")
+
+    result = convert_tree(
+        input_root=input_root,
+        output_root=output_root,
+        station="P0023",
+        channel="MHZ",
+        sampling_frequency_hz=5.0,
+    )
+
+    assert len(result.output_paths) == 2
+    written = read(str(result.output_paths[0]))[0]
+    assert written.stats.channel == "MHZ"
+    assert written.stats.sampling_rate == pytest.approx(5.0)
+
+    transition_record_json = json.loads(result.transition_log_path.read_text(encoding="utf-8"))
+    assert transition_record_json["kind"] == "adjacent"
+    assert transition_record_json["delta_samples"] == pytest.approx(0.0)
+
+
+def test_cli_accepts_custom_sampling_frequency_for_channel_validation(tmp_path):
+    input_root = tmp_path / "raw"
+    output_root = tmp_path / "mseed"
+    input_root.mkdir()
+
+    assert (
+        main(
+            [
+                "-i",
+                str(input_root),
+                "-o",
+                str(output_root),
+                "-S",
+                "P0023",
+                "-C",
+                "MHZ",
+                "-fs",
+                "5.0",
+            ]
+        )
+        == 0
+    )
 
 
 def test_cli_rejects_channel_band_code_for_sampling_rate(capsys):
@@ -184,6 +283,14 @@ def test_cli_rejects_channel_band_code_for_sampling_rate(capsys):
 
     assert exc.value.code == 2
     assert "Channel code 'MHZ' has band code 'M'" in capsys.readouterr().err
+
+
+def test_cli_rejects_nonpositive_sampling_frequency(capsys):
+    with pytest.raises(SystemExit) as exc:
+        main(["-i", "raw", "-o", "mseed", "-S", "P0023", "-fs", "0"])
+
+    assert exc.value.code == 2
+    assert "sampling_frequency_hz must be a positive finite value" in capsys.readouterr().err
 
 
 def _segment(name: str, starttime: UTCDateTime, npts: int) -> SegmentInfo:
