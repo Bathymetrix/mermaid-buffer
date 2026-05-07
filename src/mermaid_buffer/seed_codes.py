@@ -8,8 +8,6 @@
 
 from __future__ import annotations
 
-from math import isclose
-
 CORNER_PERIOD_THRESHOLD_SECONDS = 10.0
 
 
@@ -19,8 +17,9 @@ def band_codes_for_sample_rate(sample_rate_hz: float) -> tuple[str, ...]:
     Codes that also depend on instrument response corner period are returned
     together because sample rate alone cannot distinguish them.
     """
-
     rate = _positive_sample_rate(sample_rate_hz)
+    nominal_rel_tol = 0.05  # ±5% for nominal L/V/U bands
+
     if 1000 <= rate < 5000:
         return ("F", "G")
     if 250 <= rate < 1000:
@@ -29,14 +28,14 @@ def band_codes_for_sample_rate(sample_rate_hz: float) -> tuple[str, ...]:
         return ("H", "E")
     if 10 <= rate < 80:
         return ("B", "S")
+    if 1.0 * (1 - nominal_rel_tol) <= rate <= 1.0 * (1 + nominal_rel_tol):
+        return ("L",)
+    if 0.1 * (1 - nominal_rel_tol) <= rate <= 0.1 * (1 + nominal_rel_tol):
+        return ("V",)
+    if 0.01 * (1 - nominal_rel_tol) <= rate <= 0.01 * (1 + nominal_rel_tol):
+        return ("U",)
     if 1 < rate < 10:
         return ("M",)
-    if isclose(rate, 1.0, rel_tol=0.0, abs_tol=1e-9):
-        return ("L",)
-    if isclose(rate, 0.1, rel_tol=0.0, abs_tol=1e-9):
-        return ("V",)
-    if isclose(rate, 0.01, rel_tol=0.0, abs_tol=1e-9):
-        return ("U",)
     if 0.0001 <= rate < 0.001:
         return ("R",)
     if 0.00001 <= rate < 0.0001:

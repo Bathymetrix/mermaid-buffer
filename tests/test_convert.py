@@ -58,6 +58,29 @@ def test_band_codes_for_mermaid_sampling_rate():
     assert band_codes_for_sample_rate(SAMPLING_RATE_HZ) == ("B", "S")
 
 
+@pytest.mark.parametrize(
+    ("sample_rate_hz", "expected_codes"),
+    [
+        (0.95, ("L",)),
+        (1.0, ("L",)),
+        (1.05, ("L",)),
+        (0.095, ("V",)),
+        (0.1, ("V",)),
+        (0.105, ("V",)),
+        (0.0095, ("U",)),
+        (0.01, ("U",)),
+        (0.0105, ("U",)),
+    ],
+)
+def test_nominal_band_codes_allow_five_percent_tolerance(sample_rate_hz, expected_codes):
+    assert band_codes_for_sample_rate(sample_rate_hz) == expected_codes
+
+
+def test_l_band_tolerance_takes_precedence_over_m_band_range():
+    assert band_codes_for_sample_rate(1.05) == ("L",)
+    assert band_codes_for_sample_rate(1.051) == ("M",)
+
+
 def test_band_code_uses_corner_period_when_sample_rate_is_ambiguous():
     assert band_code(SAMPLING_RATE_HZ, corner_period_seconds=10) == "B"
     assert band_code(SAMPLING_RATE_HZ, corner_period_seconds=9.999) == "S"
