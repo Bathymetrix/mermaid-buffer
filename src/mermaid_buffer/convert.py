@@ -10,6 +10,8 @@ from typing import Iterable
 import numpy as np
 from obspy import Trace, UTCDateTime
 
+from mermaid_buffer.seed_codes import validate_channel_code
+
 SAMPLING_RATE_HZ = 40.01406
 RAW_DTYPE = np.dtype("<i4")
 ADJACENCY_TOLERANCE_SECONDS = 0.5 / SAMPLING_RATE_HZ
@@ -98,6 +100,7 @@ def make_output_path(
 ) -> Path:
     """Build the flat miniSEED output path for one source file."""
 
+    channel = validate_channel_code(channel, SAMPLING_RATE_HZ)
     source_timestamp = Path(input_path).name
     filename = f"{network}.{station}.{location}.{channel}.{source_timestamp}.mseed"
     return Path(output_root) / filename
@@ -113,6 +116,7 @@ def build_trace(
 ) -> Trace:
     """Create an ObsPy Trace with miniSEED metadata."""
 
+    channel = validate_channel_code(channel, SAMPLING_RATE_HZ)
     trace = Trace(data=np.asarray(samples, dtype=RAW_DTYPE))
     trace.stats.network = network
     trace.stats.station = station
@@ -134,6 +138,7 @@ def convert_segment(
 ) -> Path:
     """Convert one raw waveform segment to one miniSEED file."""
 
+    channel = validate_channel_code(channel, SAMPLING_RATE_HZ)
     samples = read_raw_samples(segment.path)
     if len(samples) != segment.npts:
         raise ValueError(f"Sample count changed while converting: {segment.path}")
@@ -171,6 +176,7 @@ def convert_tree(
 
     input_root = Path(input_root)
     output_root = Path(output_root)
+    channel = validate_channel_code(channel, SAMPLING_RATE_HZ)
     output_root.mkdir(parents=True, exist_ok=True)
 
     segments = discover_segments(input_root)

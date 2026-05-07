@@ -16,8 +16,10 @@ from mermaid_buffer.convert import (
     DEFAULT_CHANNEL,
     DEFAULT_LOCATION,
     DEFAULT_NETWORK,
+    SAMPLING_RATE_HZ,
     convert_tree,
 )
+from mermaid_buffer.seed_codes import validate_channel_code
 
 
 class _DefaultsHelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
@@ -106,6 +108,10 @@ def _convert_command(args: argparse.Namespace) -> int:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    try:
+        args.channel = validate_channel_code(args.channel, SAMPLING_RATE_HZ)
+    except ValueError as exc:
+        parser.error(str(exc))
     return args.func(args)
 
 

@@ -109,6 +109,15 @@ Location code. Default: `20`. This is written to `trace.stats.location` and incl
 `-C, --channel CHANNEL`
 
 Channel code. Default: `BHZ`. This is written to `trace.stats.channel` and included in the output filename.
+The channel code must be exactly three alphanumeric characters. Its first letter
+is validated as a SEED band code for the fixed `40.01406 Hz` sampling rate; `B`
+and `S` are valid for this rate, while a channel such as `MHZ` is rejected.
+
+The SEED band-code helpers are importable for later reuse:
+
+```python
+from mermaid_buffer import band_codes_for_sample_rate, validate_channel_code
+```
 
 The raw input files have no header or metadata, so `--network`, `--station`, `--location`, and `--channel` do not select data from the input. They label every output trace produced by that run.
 

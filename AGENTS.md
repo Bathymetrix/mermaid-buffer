@@ -16,7 +16,7 @@ Guidance for coding agents working in this repository.
 - Distribution/project name: `mermaid-buffer`.
 - Python import package: `mermaid_buffer`.
 - Console command: `buffer2mseed`.
-- Remove user-facing and source mentions of the old name `buffmaid`.
+- Remove user-facing and source mentions of the previous package name.
 - Use lowercase `miniSEED` and `.mseed` in prose. Use `format="MSEED"` only when referring to the ObsPy API value.
 
 ## CLI Contract
@@ -44,6 +44,9 @@ buffer2mseed --input-root INPUT_ROOT --output-root OUTPUT_ROOT --station STATION
   - network: `MH`
   - location: `20`
   - channel: `BHZ`
+- Channel codes are supplied by the user or defaulted. They must be exactly three alphanumeric characters.
+- Validate the first channel letter as a SEED waveform band code for the fixed `40.01406 Hz` sampling rate before conversion. For this rate, `B` and `S` are valid; reject a code like `MHZ` with a useful error.
+- Keep band-code/channel validation importable from the package root, for example `from mermaid_buffer import band_codes_for_sample_rate`.
 
 ## Conversion Rules
 

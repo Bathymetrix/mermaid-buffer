@@ -1,9 +1,11 @@
 from pathlib import Path
 
 import numpy as np
+import pytest
 from obspy import UTCDateTime, read
 
-from mermaid_buffer.cli import build_parser
+from mermaid_buffer import band_code, band_codes_for_sample_rate, validate_channel_code
+from mermaid_buffer.cli import build_parser, main
 from mermaid_buffer.convert import (
     SAMPLING_RATE_HZ,
     SegmentInfo,
@@ -50,6 +52,27 @@ def test_reading_little_endian_int32_binary_data(tmp_path):
 
 def test_fixed_sampling_rate_constant():
     assert SAMPLING_RATE_HZ == 40.01406
+
+
+def test_band_codes_for_mermaid_sampling_rate():
+    assert band_codes_for_sample_rate(SAMPLING_RATE_HZ) == ("B", "S")
+
+
+def test_band_code_uses_corner_period_when_sample_rate_is_ambiguous():
+    assert band_code(SAMPLING_RATE_HZ, corner_period_seconds=10) == "B"
+    assert band_code(SAMPLING_RATE_HZ, corner_period_seconds=9.999) == "S"
+
+    with pytest.raises(ValueError, match="corner_period_seconds is required"):
+        band_code(SAMPLING_RATE_HZ)
+
+
+def test_channel_code_validation_rejects_invalid_band_code():
+    assert validate_channel_code("bhz", SAMPLING_RATE_HZ) == "BHZ"
+    assert validate_channel_code("SHZ", SAMPLING_RATE_HZ) == "SHZ"
+    assert validate_channel_code("MHZ", 5.0) == "MHZ"
+
+    with pytest.raises(ValueError, match="40.01406 Hz allows B or S"):
+        validate_channel_code("MHZ", SAMPLING_RATE_HZ)
 
 
 def test_transition_classification_adjacent_gap_overlap():
@@ -130,6 +153,14 @@ def test_convert_parser_accepts_short_options(tmp_path):
     assert args.network == "XX"
     assert args.location == "00"
     assert args.channel == "BDF"
+
+
+def test_cli_rejects_channel_band_code_for_sampling_rate(capsys):
+    with pytest.raises(SystemExit) as exc:
+        main(["-i", "raw", "-o", "mseed", "-S", "P0023", "-C", "MHZ"])
+
+    assert exc.value.code == 2
+    assert "Channel code 'MHZ' has band code 'M'" in capsys.readouterr().err
 
 
 def _segment(name: str, starttime: UTCDateTime, npts: int) -> SegmentInfo:
