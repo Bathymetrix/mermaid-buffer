@@ -6,7 +6,7 @@ from dataclasses import dataclass
 import json
 from math import isfinite
 from pathlib import Path
-from typing import Iterable
+from typing import Callable, Iterable
 
 import numpy as np
 from obspy import Trace, UTCDateTime
@@ -240,6 +240,8 @@ def convert_tree(
     location: str = DEFAULT_LOCATION,
     channel: str = DEFAULT_CHANNEL,
     sampling_frequency_hz: float = SAMPLING_RATE_HZ,
+    *,
+    progress_callback: Callable[[int, int, SegmentInfo, Path], None] | None = None,
 ) -> ConversionResult:
     """Convert every discovered raw waveform file under an input root."""
 
@@ -257,8 +259,10 @@ def convert_tree(
         sampling_frequency_hz=frequency,
     )
     skipped_log_path = write_skipped_log(discovery.skipped_files, output_root)
-    output_paths = [
-        convert_segment(
+    output_paths: list[Path] = []
+    total_segments = len(segments)
+    for segment_number, segment in enumerate(segments, start=1):
+        output_path = convert_segment(
             segment=segment,
             output_root=output_root,
             station=station,
@@ -267,8 +271,9 @@ def convert_tree(
             channel=channel,
             sampling_frequency_hz=frequency,
         )
-        for segment in segments
-    ]
+        output_paths.append(output_path)
+        if progress_callback is not None:
+            progress_callback(segment_number, total_segments, segment, output_path)
 
     return ConversionResult(
         input_root=input_root,

@@ -345,12 +345,21 @@ def test_cli_prints_processed_and_skipped_counts(tmp_path, capsys):
     output_root = tmp_path / "mseed"
     input_root.mkdir()
     np.array([1, 2, 3, 4], dtype="<i4").tofile(input_root / "2018-11-03T10_53_50")
+    np.array([5, 6], dtype="<i4").tofile(input_root / "2018-11-03T10_53_51")
     (input_root / "manual.pdf").write_bytes(b"%PDF-1.7\n")
 
     assert main(["-i", str(input_root), "-o", str(output_root), "-s", "P0023"]) == 0
 
     stdout = capsys.readouterr().out
-    assert "Processed 1 file(s); skipped 1 file(s)." in stdout
+    assert (
+        "[1/2] 2018-11-03T10_53_50 -> MH.P0023.20.BHZ.2018-11-03T10_53_50.mseed"
+        in stdout
+    )
+    assert (
+        "[2/2] 2018-11-03T10_53_51 -> MH.P0023.20.BHZ.2018-11-03T10_53_51.mseed"
+        in stdout
+    )
+    assert "Processed 2 file(s); skipped 1 file(s)." in stdout
     assert "Transition log:" in stdout
     assert "Skipped log:" in stdout
 

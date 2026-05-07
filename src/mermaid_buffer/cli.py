@@ -100,6 +100,12 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def _convert_command(args: argparse.Namespace) -> int:
+    def print_progress(segment_number, total_segments, segment, output_path):
+        print(
+            f"[{segment_number}/{total_segments}] {segment.path.name} -> {output_path.name}",
+            flush=True,
+        )
+
     result = convert_tree(
         input_root=args.input_root,
         output_root=args.output_root,
@@ -108,6 +114,7 @@ def _convert_command(args: argparse.Namespace) -> int:
         location=args.location,
         channel=args.channel,
         sampling_frequency_hz=args.sampling_frequency,
+        progress_callback=print_progress,
     )
     print(
         f"Processed {len(result.output_paths)} file(s); "

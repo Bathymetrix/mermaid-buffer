@@ -161,9 +161,10 @@ MH.P0023.20.BHZ.2018-12-06T03_06_14.450000.mseed
 
 miniSEED metadata is written with ObsPy. The data quality indicator is set explicitly to `R`.
 
-The CLI prints a concise run summary:
+The CLI prints one progress line as each output is written, followed by a concise run summary:
 
 ```text
+[1/12] 2018-11-03T10_53_50 -> MH.P0023.20.BHZ.2018-11-03T10_53_50.mseed
 Processed 12 file(s); skipped 2 file(s).
 ```
 

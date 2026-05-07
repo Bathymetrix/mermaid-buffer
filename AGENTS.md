@@ -106,6 +106,7 @@ buffer2mseed_skipped_files.jsonl
 - Transition records sort discovered inputs by parsed start time and log every consecutive transition as `adjacent`, `gap`, or `overlap`.
 - Expected next start is `previous_starttime + previous_npts / sampling_frequency_hz`.
 - Adjacency tolerance is `0.5 / sampling_frequency_hz` seconds.
+- During conversion, the CLI prints one `[X/Y] INPUT_BASENAME -> OUTPUT_BASENAME.mseed` line per written file.
 - The CLI prints a concise processed/skipped file count.
 
 ## Verification
