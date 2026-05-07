@@ -20,6 +20,7 @@ DEFAULT_NETWORK = "MH"
 DEFAULT_LOCATION = "20"
 DEFAULT_CHANNEL = "BHZ"
 DEFAULT_TRANSITION_LOG_NAME = "buffer2mseed_transition_records.jsonl"
+DEFAULT_SKIPPED_LOG_NAME = "buffer2mseed_skipped_files.jsonl"
 
 
 @dataclass(frozen=True)
@@ -33,6 +34,22 @@ class SegmentInfo:
 
 
 @dataclass(frozen=True)
+class SkippedFile:
+    """A discovered file that was not accepted as a raw waveform segment."""
+
+    path: Path
+    reason: str
+
+
+@dataclass(frozen=True)
+class DiscoveryResult:
+    """Accepted and skipped files from recursive input discovery."""
+
+    segments: list[SegmentInfo]
+    skipped_files: list[SkippedFile]
+
+
+@dataclass(frozen=True)
 class ConversionResult:
     """Summary of a conversion run."""
 
@@ -40,6 +57,8 @@ class ConversionResult:
     output_root: Path
     output_paths: list[Path]
     transition_log_path: Path
+    skipped_log_path: Path
+    skipped_files: list[SkippedFile]
 
 
 def parse_starttime_from_filename(path: str | Path) -> UTCDateTime:
@@ -92,18 +111,40 @@ def validate_sampling_frequency_hz(sampling_frequency_hz: float) -> float:
 def discover_segments(input_root: str | Path) -> list[SegmentInfo]:
     """Recursively discover input files and sort them by parsed UTC start time."""
 
+    return discover_input_files(input_root).segments
+
+
+def discover_input_files(input_root: str | Path) -> DiscoveryResult:
+    """Recursively discover raw segments and collect skipped-file reasons."""
+
     root = Path(input_root)
-    segments = [
-        SegmentInfo(
-            path=path,
-            source_timestamp=path.name,
-            starttime=parse_starttime_from_filename(path),
-            npts=count_raw_samples(path),
+    segments: list[SegmentInfo] = []
+    skipped_files: list[SkippedFile] = []
+    for path in root.rglob("*"):
+        if not path.is_file():
+            continue
+        try:
+            starttime = parse_starttime_from_filename(path)
+            npts = count_raw_samples(path)
+        except (OSError, ValueError) as exc:
+            skipped_files.append(SkippedFile(path=path, reason=str(exc)))
+            continue
+        segments.append(
+            SegmentInfo(
+                path=path,
+                source_timestamp=path.name,
+                starttime=starttime,
+                npts=npts,
+            )
         )
-        for path in root.rglob("*")
-        if path.is_file()
-    ]
-    return sorted(segments, key=lambda segment: (segment.starttime.timestamp, str(segment.path)))
+
+    return DiscoveryResult(
+        segments=sorted(
+            segments,
+            key=lambda segment: (segment.starttime.timestamp, str(segment.path)),
+        ),
+        skipped_files=sorted(skipped_files, key=lambda skipped: str(skipped.path)),
+    )
 
 
 def make_output_path(
@@ -205,12 +246,14 @@ def convert_tree(
     channel = validate_channel_code(channel, frequency)
     output_root.mkdir(parents=True, exist_ok=True)
 
-    segments = discover_segments(input_root)
+    discovery = discover_input_files(input_root)
+    segments = discovery.segments
     transition_log_path = write_transition_log(
         segments,
         output_root,
         sampling_frequency_hz=frequency,
     )
+    skipped_log_path = write_skipped_log(discovery.skipped_files, output_root)
     output_paths = [
         convert_segment(
             segment=segment,
@@ -229,6 +272,8 @@ def convert_tree(
         output_root=output_root,
         output_paths=output_paths,
         transition_log_path=transition_log_path,
+        skipped_log_path=skipped_log_path,
+        skipped_files=discovery.skipped_files,
     )
 
 
@@ -300,6 +345,26 @@ def write_transition_log(
     outpath.parent.mkdir(parents=True, exist_ok=True)
     with outpath.open("w", encoding="utf-8") as handle:
         for record in transition_records(segments, sampling_frequency_hz):
+            handle.write(json.dumps(record, sort_keys=True, separators=(",", ":")))
+            handle.write("\n")
+    return outpath
+
+
+def write_skipped_log(
+    skipped_files: Iterable[SkippedFile],
+    output_root: str | Path,
+    filename: str = DEFAULT_SKIPPED_LOG_NAME,
+) -> Path:
+    """Write JSONL records for files skipped during discovery."""
+
+    outpath = Path(output_root) / filename
+    outpath.parent.mkdir(parents=True, exist_ok=True)
+    with outpath.open("w", encoding="utf-8") as handle:
+        for skipped_file in skipped_files:
+            record = {
+                "file": str(skipped_file.path),
+                "reason": skipped_file.reason,
+            }
             handle.write(json.dumps(record, sort_keys=True, separators=(",", ":")))
             handle.write("\n")
     return outpath

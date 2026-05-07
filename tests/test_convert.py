@@ -253,6 +253,37 @@ def test_convert_tree_uses_custom_sampling_frequency_for_outputs(tmp_path):
     assert transition_record_json["delta_samples"] == pytest.approx(0.0)
 
 
+def test_convert_tree_logs_skipped_files_without_crashing(tmp_path):
+    input_root = tmp_path / "raw"
+    output_root = tmp_path / "mseed"
+    docs_root = input_root / "docs"
+    docs_root.mkdir(parents=True)
+    np.array([1, 2, 3, 4], dtype="<i4").tofile(input_root / "2018-11-03T10_53_50")
+    (input_root / "2018-11-03T10_53_51").write_bytes(b"abc")
+    (docs_root / "manual.pdf").write_bytes(b"%PDF-1.7\n")
+
+    result = convert_tree(input_root=input_root, output_root=output_root, station="P0023")
+
+    assert len(result.output_paths) == 1
+    assert len(result.skipped_files) == 2
+    skipped_records = [
+        json.loads(line)
+        for line in result.skipped_log_path.read_text(encoding="utf-8").splitlines()
+    ]
+    assert {Path(record["file"]).name for record in skipped_records} == {
+        "2018-11-03T10_53_51",
+        "manual.pdf",
+    }
+    assert any(
+        "Raw file size is not divisible by 4 bytes" in record["reason"]
+        for record in skipped_records
+    )
+    assert any(
+        "Filename does not contain a timestamp separator: manual.pdf" in record["reason"]
+        for record in skipped_records
+    )
+
+
 def test_cli_accepts_custom_sampling_frequency_for_channel_validation(tmp_path):
     input_root = tmp_path / "raw"
     output_root = tmp_path / "mseed"
@@ -275,6 +306,21 @@ def test_cli_accepts_custom_sampling_frequency_for_channel_validation(tmp_path):
         )
         == 0
     )
+
+
+def test_cli_prints_processed_and_skipped_counts(tmp_path, capsys):
+    input_root = tmp_path / "raw"
+    output_root = tmp_path / "mseed"
+    input_root.mkdir()
+    np.array([1, 2, 3, 4], dtype="<i4").tofile(input_root / "2018-11-03T10_53_50")
+    (input_root / "manual.pdf").write_bytes(b"%PDF-1.7\n")
+
+    assert main(["-i", str(input_root), "-o", str(output_root), "-s", "P0023"]) == 0
+
+    stdout = capsys.readouterr().out
+    assert "Processed 1 file(s); skipped 1 file(s)." in stdout
+    assert "Transition log:" in stdout
+    assert "Skipped log:" in stdout
 
 
 def test_cli_rejects_channel_band_code_for_sampling_rate(capsys):

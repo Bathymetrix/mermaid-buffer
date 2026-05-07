@@ -60,7 +60,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--output-root",
         required=True,
         type=Path,
-        help="directory for flat output .mseed files and the transition JSONL log",
+        help="directory for flat output .mseed files and JSONL logs",
     )
     parser.add_argument(
         "-fs",
@@ -109,9 +109,13 @@ def _convert_command(args: argparse.Namespace) -> int:
         channel=args.channel,
         sampling_frequency_hz=args.sampling_frequency,
     )
-    print(f"Converted {len(result.output_paths)} file(s).")
+    print(
+        f"Processed {len(result.output_paths)} file(s); "
+        f"skipped {len(result.skipped_files)} file(s)."
+    )
     print(f"Output root: {result.output_root}")
     print(f"Transition log: {result.transition_log_path}")
+    print(f"Skipped log: {result.skipped_log_path}")
     return 0
 
 

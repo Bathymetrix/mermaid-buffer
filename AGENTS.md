@@ -62,6 +62,8 @@ buffer2mseed --input-root INPUT_ROOT --output-root OUTPUT_ROOT --sampling-freque
   - `2018-12-06T03_06_14.450000`
   - `2018-11-03T10_53_50`
 - Recursively discover files under `--input-root`.
+- Skip discovered files that cannot be parsed as raw inputs instead of crashing.
+- Log skipped files with the path and reason.
 - Use the default sampling frequency constant `40.01406`. Do not use `40` as a default or fallback.
 - Do not add time correction, event analysis, DET/REQ logic, interpolation, gap filling, merging, or continuity forcing.
 - Use ObsPy `Trace` and write with `trace.write(outpath, format="MSEED")`.
@@ -89,9 +91,17 @@ MH.P0023.20.BHZ.2018-12-06T03_06_14.450000.mseed
 buffer2mseed_transition_records.jsonl
 ```
 
+- Skipped-file log filename:
+
+```text
+buffer2mseed_skipped_files.jsonl
+```
+
+- Skipped-file records include the skipped file path and reason.
 - Transition records sort discovered inputs by parsed start time and log every consecutive transition as `adjacent`, `gap`, or `overlap`.
 - Expected next start is `previous_starttime + previous_npts / sampling_frequency_hz`.
 - Adjacency tolerance is `0.5 / sampling_frequency_hz` seconds.
+- The CLI prints a concise processed/skipped file count.
 
 ## Verification
 
