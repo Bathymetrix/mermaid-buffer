@@ -25,20 +25,20 @@ Guidance for coding agents working in this repository.
 - Supported command shape:
 
 ```bash
-buffer2mseed -i INPUT_ROOT -o OUTPUT_ROOT -S STATION -fs SAMPLING_FREQUENCY_HZ
+buffer2mseed -i INPUT_ROOT -o OUTPUT_ROOT -fs SAMPLING_FREQUENCY_HZ -s STATION
 ```
 
 - Long options must also work:
 
 ```bash
-buffer2mseed --input-root INPUT_ROOT --output-root OUTPUT_ROOT --station STATION --sampling-frequency SAMPLING_FREQUENCY_HZ
+buffer2mseed --input-root INPUT_ROOT --output-root OUTPUT_ROOT --sampling-frequency SAMPLING_FREQUENCY_HZ --station STATION
 ```
 
 - Metadata option aliases:
-  - `-S`, `--station`
-  - `-N`, `--network`
-  - `-L`, `--location`
-  - `-C`, `--channel`
+  - `-s`, `--station`
+  - `-n`, `--network`
+  - `-c`, `--channel`
+  - `-l`, `--location`
 - Sampling frequency option aliases:
   - `-fs`, `--sampling-frequency`
 

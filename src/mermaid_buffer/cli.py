@@ -63,12 +63,6 @@ def build_parser() -> argparse.ArgumentParser:
         help="directory for flat output .mseed files and the transition JSONL log",
     )
     parser.add_argument(
-        "-S",
-        "--station",
-        required=True,
-        help="station code to write into every output trace and filename",
-    )
-    parser.add_argument(
         "-fs",
         "--sampling-frequency",
         type=float,
@@ -77,22 +71,28 @@ def build_parser() -> argparse.ArgumentParser:
         help="sampling frequency in Hz to write into traces and use for transition timing",
     )
     parser.add_argument(
-        "-N",
+        "-s",
+        "--station",
+        required=True,
+        help="station code to write into every output trace and filename",
+    )
+    parser.add_argument(
+        "-n",
         "--network",
         default=DEFAULT_NETWORK,
         help="network code to write into every output trace and filename",
     )
     parser.add_argument(
-        "-L",
-        "--location",
-        default=DEFAULT_LOCATION,
-        help="location code to write into every output trace and filename",
-    )
-    parser.add_argument(
-        "-C",
+        "-c",
         "--channel",
         default=DEFAULT_CHANNEL,
         help="channel code to write into every output trace and filename",
+    )
+    parser.add_argument(
+        "-l",
+        "--location",
+        default=DEFAULT_LOCATION,
+        help="location code to write into every output trace and filename",
     )
     parser.set_defaults(func=_convert_command)
 

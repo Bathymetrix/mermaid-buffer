@@ -186,11 +186,11 @@ def test_convert_help_lists_metadata_defaults(capsys):
     help_text = capsys.readouterr().out
     assert "-i, --input-root INPUT_ROOT" in help_text
     assert "-o, --output-root OUTPUT_ROOT" in help_text
-    assert "-S, --station STATION" in help_text
-    assert "-N, --network NETWORK" in help_text
-    assert "-L, --location LOCATION" in help_text
-    assert "-C, --channel CHANNEL" in help_text
     assert "-fs, --sampling-frequency HZ" in help_text
+    assert "-s, --station STATION" in help_text
+    assert "-n, --network NETWORK" in help_text
+    assert "-c, --channel CHANNEL" in help_text
+    assert "-l, --location LOCATION" in help_text
     assert "(default: MH)" in help_text
     assert "(default: 20)" in help_text
     assert "(default: BHZ)" in help_text
@@ -206,14 +206,14 @@ def test_convert_parser_accepts_short_options(tmp_path):
             str(tmp_path / "in"),
             "-o",
             str(tmp_path / "out"),
-            "-S",
+            "-s",
             "P0023",
-            "-N",
+            "-n",
             "XX",
-            "-L",
-            "00",
-            "-C",
+            "-c",
             "BDF",
+            "-l",
+            "00",
             "-fs",
             "20.0",
         ]
@@ -265,9 +265,9 @@ def test_cli_accepts_custom_sampling_frequency_for_channel_validation(tmp_path):
                 str(input_root),
                 "-o",
                 str(output_root),
-                "-S",
+                "-s",
                 "P0023",
-                "-C",
+                "-c",
                 "MHZ",
                 "-fs",
                 "5.0",
@@ -279,7 +279,7 @@ def test_cli_accepts_custom_sampling_frequency_for_channel_validation(tmp_path):
 
 def test_cli_rejects_channel_band_code_for_sampling_rate(capsys):
     with pytest.raises(SystemExit) as exc:
-        main(["-i", "raw", "-o", "mseed", "-S", "P0023", "-C", "MHZ"])
+        main(["-i", "raw", "-o", "mseed", "-s", "P0023", "-c", "MHZ"])
 
     assert exc.value.code == 2
     assert "Channel code 'MHZ' has band code 'M'" in capsys.readouterr().err
@@ -287,7 +287,7 @@ def test_cli_rejects_channel_band_code_for_sampling_rate(capsys):
 
 def test_cli_rejects_nonpositive_sampling_frequency(capsys):
     with pytest.raises(SystemExit) as exc:
-        main(["-i", "raw", "-o", "mseed", "-S", "P0023", "-fs", "0"])
+        main(["-i", "raw", "-o", "mseed", "-s", "P0023", "-fs", "0"])
 
     assert exc.value.code == 2
     assert "sampling_frequency_hz must be a positive finite value" in capsys.readouterr().err
