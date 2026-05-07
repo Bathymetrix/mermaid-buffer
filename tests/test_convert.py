@@ -260,18 +260,20 @@ def test_convert_tree_logs_skipped_files_without_crashing(tmp_path):
     docs_root.mkdir(parents=True)
     np.array([1, 2, 3, 4], dtype="<i4").tofile(input_root / "2018-11-03T10_53_50")
     (input_root / "2018-11-03T10_53_51").write_bytes(b"abc")
+    (input_root / ".DS_Store").write_bytes(b"metadata")
     (docs_root / "manual.pdf").write_bytes(b"%PDF-1.7\n")
 
     result = convert_tree(input_root=input_root, output_root=output_root, station="P0023")
 
     assert len(result.output_paths) == 1
-    assert len(result.skipped_files) == 2
+    assert len(result.skipped_files) == 3
     skipped_records = [
         json.loads(line)
         for line in result.skipped_log_path.read_text(encoding="utf-8").splitlines()
     ]
     assert {Path(record["file"]).name for record in skipped_records} == {
         "2018-11-03T10_53_51",
+        ".DS_Store",
         "manual.pdf",
     }
     assert any(
@@ -280,6 +282,10 @@ def test_convert_tree_logs_skipped_files_without_crashing(tmp_path):
     )
     assert any(
         "Filename does not contain a timestamp separator: manual.pdf" in record["reason"]
+        for record in skipped_records
+    )
+    assert any(
+        Path(record["file"]).name == ".DS_Store" and record["reason"] == "Dot file is skipped"
         for record in skipped_records
     )
 

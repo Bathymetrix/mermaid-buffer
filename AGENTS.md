@@ -62,6 +62,7 @@ buffer2mseed --input-root INPUT_ROOT --output-root OUTPUT_ROOT --sampling-freque
   - `2018-12-06T03_06_14.450000`
   - `2018-11-03T10_53_50`
 - Recursively discover files under `--input-root`.
+- Skip dot files instead of treating them as raw inputs.
 - Skip discovered files that cannot be parsed as raw inputs instead of crashing.
 - Log skipped files with the path and reason.
 - Use the default sampling frequency constant `40.01406`. Do not use `40` as a default or fallback.

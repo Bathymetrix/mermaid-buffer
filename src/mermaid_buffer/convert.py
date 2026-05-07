@@ -123,6 +123,9 @@ def discover_input_files(input_root: str | Path) -> DiscoveryResult:
     for path in root.rglob("*"):
         if not path.is_file():
             continue
+        if path.name.startswith("."):
+            skipped_files.append(SkippedFile(path=path, reason="Dot file is skipped"))
+            continue
         try:
             starttime = parse_starttime_from_filename(path)
             npts = count_raw_samples(path)

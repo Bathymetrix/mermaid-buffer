@@ -24,7 +24,7 @@ Directory layout can already be organized by time. The converter discovers files
 2018-12/2018-12-06/2018-12-06T03_06_14.450000
 ```
 
-Files that cannot be parsed as raw inputs are skipped instead of stopping the run. Each skipped file is recorded with a reason in `buffer2mseed_skipped_files.jsonl`.
+Dot files and files that cannot be parsed as raw inputs are skipped instead of stopping the run. Each skipped file is recorded with a reason in `buffer2mseed_skipped_files.jsonl`.
 
 The sampling frequency defaults to:
 
@@ -91,7 +91,7 @@ buffer2mseed --help
 
 `-i, --input-root INPUT_ROOT`
 
-Root directory to search recursively for raw binary input files. Every discovered regular file is checked as one raw `<i4` waveform file whose filename is its UTC start time. Files that do not match are skipped and logged.
+Root directory to search recursively for raw binary input files. Every discovered regular file is checked as one raw `<i4` waveform file whose filename is its UTC start time. Dot files and files that do not match are skipped and logged.
 
 `-o, --output-root OUTPUT_ROOT`
 
@@ -163,7 +163,7 @@ Processed 12 file(s); skipped 2 file(s).
 
 ## Skipped-File Log
 
-Discovered files whose names cannot be parsed as UTC start times, or whose byte counts are not valid little-endian int32 sample data, are skipped and logged:
+Discovered dot files, files whose names cannot be parsed as UTC start times, or files whose byte counts are not valid little-endian int32 sample data, are skipped and logged:
 
 ```text
 buffer2mseed_skipped_files.jsonl
