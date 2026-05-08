@@ -54,7 +54,7 @@ buffer2mseed --input-root INPUT_ROOT --output-root OUTPUT_ROOT --sampling-freque
 - Sampling frequency is supplied by the user or defaulted. It must be a positive value in Hz.
 - Data quality is supplied by the user or defaulted. It must be one of the miniSEED data quality indicators `D`, `R`, `Q`, or `M`.
 - Validate the first channel letter as a SEED waveform band code for the selected sampling frequency before conversion. At the default `40.01406 Hz`, `B` and `S` are valid; reject a code like `MHZ` with a useful error.
-- Keep band-code/channel validation importable from the package root, for example `from mermaid_buffer import band_codes_for_sample_rate`.
+- Treat `mermaid-buffer` as a CLI converter, not a metadata utility library. The package root public API should stay minimal; only `__version__` is exported for v1.
 
 ## Conversion Rules
 

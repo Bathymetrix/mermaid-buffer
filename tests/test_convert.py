@@ -6,13 +6,7 @@ import pytest
 from obspy import UTCDateTime, read
 
 import mermaid_buffer
-from mermaid_buffer import (
-    __version__,
-    band_codes_for_sample_rate,
-    validate_channel_code,
-    validate_data_quality_indicator,
-    validate_sampling_frequency_hz,
-)
+from mermaid_buffer import __version__
 from mermaid_buffer.cli import build_parser, main
 from mermaid_buffer.convert import (
     DEFAULT_SAMPLING_FREQUENCY_HZ,
@@ -24,19 +18,18 @@ from mermaid_buffer.convert import (
     parse_starttime_from_filename,
     read_raw_samples,
     transition_record,
+    validate_data_quality_indicator,
+    validate_sampling_frequency_hz,
 )
-from mermaid_buffer.seed_codes import band_code
+from mermaid_buffer.seed_codes import (
+    band_code,
+    band_codes_for_sample_rate,
+    validate_channel_code,
+)
 
 
 def test_package_root_exposes_deliberate_v1_public_api():
-    assert set(mermaid_buffer.__all__) == {
-        "DEFAULT_SAMPLING_FREQUENCY_HZ",
-        "__version__",
-        "band_codes_for_sample_rate",
-        "validate_channel_code",
-        "validate_data_quality_indicator",
-        "validate_sampling_frequency_hz",
-    }
+    assert set(mermaid_buffer.__all__) == {"__version__"}
     assert mermaid_buffer.__version__ == __version__
 
 

@@ -282,19 +282,16 @@ Adjacency uses a tolerance of half a sample:
 
 ## Public API
 
-The package root exposes only the small validation API intended for v1 support:
+`mermaid-buffer` is a CLI converter, not a metadata utility library. For v1,
+the package root only exposes the version:
 
 ```python
-from mermaid_buffer import (
-    DEFAULT_SAMPLING_FREQUENCY_HZ,
-    band_codes_for_sample_rate,
-    validate_channel_code,
-)
+from mermaid_buffer import __version__
 ```
 
-The bundled `seed_codes.py` module exists to validate miniSEED metadata for this
-converter. It should not be treated as a general-purpose SEED/FDSN utility
-library.
+Internal modules contain helper functions used by the converter, including
+miniSEED metadata validation. Those helpers are implementation details and
+should not be treated as a general-purpose SEED/FDSN utility API.
 
 ## Development
 
