@@ -364,10 +364,10 @@ def transition_record(
 
     return {
         "previous_file": str(previous.path),
-        "next_file": str(next_segment.path),
         "previous_starttime": _format_utc(previous.starttime),
         "previous_endtime": _format_utc(previous_endtime),
         "previous_npts": previous.npts,
+        "next_file": str(next_segment.path),
         "next_starttime": _format_utc(next_segment.starttime),
         "next_npts": next_segment.npts,
         "expected_next_starttime": _format_utc(expected_next_starttime),
@@ -404,7 +404,7 @@ def write_transition_log(
     outpath.parent.mkdir(parents=True, exist_ok=True)
     with outpath.open("w", encoding="utf-8") as handle:
         for record in transition_records(segments, sampling_frequency_hz):
-            handle.write(json.dumps(record, sort_keys=True, separators=(",", ":")))
+            handle.write(json.dumps(record, separators=(",", ":")))
             handle.write("\n")
     return outpath
 

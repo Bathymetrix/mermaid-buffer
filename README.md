@@ -252,6 +252,22 @@ expected next start time, delta in seconds and samples, and a transition kind:
 adjacent | gap | overlap
 ```
 
+Record fields are:
+
+| Field | Description |
+| --- | --- |
+| `previous_file` | Path to the earlier accepted input file in the sorted transition pair. |
+| `previous_starttime` | UTC start time parsed from the previous file's basename. |
+| `previous_endtime` | UTC time of the previous segment's final sample. |
+| `previous_npts` | Number of int32 samples read from `previous_file`. |
+| `next_file` | Path to the later accepted input file in the sorted transition pair. |
+| `next_starttime` | UTC start time parsed from the next file's basename. |
+| `next_npts` | Number of int32 samples read from `next_file`. |
+| `expected_next_starttime` | Timestamp where the next segment would start if it followed the previous segment exactly. |
+| `delta_seconds` | Difference between `next_starttime` and `expected_next_starttime`, measured in seconds. Positive values indicate a gap; negative values indicate overlap. |
+| `delta_samples` | Difference between `next_starttime` and `expected_next_starttime`, measured in samples at the selected sampling frequency. Positive values indicate a gap; negative values indicate overlap. |
+| `kind` | Transition classification: `adjacent`, `gap`, or `overlap`. |
+
 Expected next start is:
 
 ```text
