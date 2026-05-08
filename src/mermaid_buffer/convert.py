@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import json
-from math import isfinite
 from pathlib import Path
 import re
 from typing import Callable, Iterable
@@ -18,7 +17,11 @@ from typing import Callable, Iterable
 import numpy as np
 from obspy import Trace, UTCDateTime
 
-from mermaid_buffer.seed_codes import validate_channel_code
+from mermaid_buffer.seed_codes import (
+    validate_channel_code,
+    validate_data_quality_indicator,
+    validate_sampling_frequency_hz,
+)
 
 DEFAULT_SAMPLING_FREQUENCY_HZ = 40.01406
 RAW_DTYPE = np.dtype("<i4")
@@ -29,7 +32,6 @@ DEFAULT_CHANNEL = "BDH"
 DEFAULT_DATA_QUALITY = "R"
 DEFAULT_TRANSITION_LOG_NAME = "buffer2mseed_transition_records.jsonl"
 DEFAULT_SKIPPED_LOG_NAME = "buffer2mseed_skipped_files.jsonl"
-MINISEED_DATA_QUALITY_INDICATORS = ("D", "R", "Q", "M")
 _SOURCE_TIMESTAMP_PATTERN = re.compile(
     r"^\d{4}-\d{2}-\d{2}T\d{2}_\d{2}_\d{2}(?:\.\d{6})?$"
 )
@@ -108,35 +110,6 @@ def count_raw_samples(path: str | Path) -> int:
     if file_size % item_size:
         raise ValueError(f"Raw file size is not divisible by {item_size} bytes: {path}")
     return file_size // item_size
-
-
-def validate_sampling_frequency_hz(sampling_frequency_hz: float) -> float:
-    """Return a positive sampling frequency in Hz or raise ValueError."""
-
-    try:
-        frequency = float(sampling_frequency_hz)
-    except (TypeError, ValueError) as exc:
-        raise ValueError(
-            f"sampling_frequency_hz must be a positive finite value; got {sampling_frequency_hz!r}"
-        ) from exc
-    if not isfinite(frequency) or frequency <= 0:
-        raise ValueError(
-            f"sampling_frequency_hz must be a positive finite value; got {sampling_frequency_hz!r}"
-        )
-    return frequency
-
-
-def validate_data_quality_indicator(data_quality: str) -> str:
-    """Return a normalized miniSEED data quality indicator or raise ValueError."""
-
-    normalized = data_quality.strip().upper()
-    if normalized not in MINISEED_DATA_QUALITY_INDICATORS:
-        allowed = ", ".join(MINISEED_DATA_QUALITY_INDICATORS)
-        raise ValueError(
-            "data_quality must be one of the miniSEED data quality indicators "
-            f"{allowed}; got {data_quality!r}"
-        )
-    return normalized
 
 
 def discover_segments(input_root: str | Path) -> list[SegmentInfo]:

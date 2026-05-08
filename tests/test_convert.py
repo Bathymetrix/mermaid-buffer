@@ -18,19 +18,33 @@ from mermaid_buffer.convert import (
     parse_starttime_from_filename,
     read_raw_samples,
     transition_record,
-    validate_data_quality_indicator,
-    validate_sampling_frequency_hz,
 )
 from mermaid_buffer.seed_codes import (
     band_code,
     band_codes_for_sample_rate,
     validate_channel_code,
+    validate_data_quality_indicator,
+    validate_sampling_frequency_hz,
 )
 
 
 def test_package_root_exposes_deliberate_v1_public_api():
     assert set(mermaid_buffer.__all__) == {"__version__"}
     assert mermaid_buffer.__version__ == __version__
+    assert not hasattr(mermaid_buffer, "band_codes_for_sample_rate")
+    assert not hasattr(mermaid_buffer, "DEFAULT_SAMPLING_FREQUENCY_HZ")
+
+
+def test_seed_code_helpers_are_importable_from_submodule():
+    from mermaid_buffer.seed_codes import band_codes_for_sample_rate
+    from mermaid_buffer.seed_codes import validate_channel_code
+    from mermaid_buffer.seed_codes import validate_data_quality_indicator
+    from mermaid_buffer.seed_codes import validate_sampling_frequency_hz
+
+    assert band_codes_for_sample_rate(40.01406) == ("B", "S")
+    assert validate_channel_code("bdh", 40.01406) == "BDH"
+    assert validate_data_quality_indicator(" r ") == "R"
+    assert validate_sampling_frequency_hz("40.01406") == pytest.approx(40.01406)
 
 
 def test_parse_starttime_with_fractional_seconds():

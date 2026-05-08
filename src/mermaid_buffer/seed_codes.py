@@ -8,7 +8,10 @@
 
 from __future__ import annotations
 
+from math import isfinite
+
 CORNER_PERIOD_THRESHOLD_SECONDS = 10.0
+MINISEED_DATA_QUALITY_INDICATORS = ("D", "R", "Q", "M")
 
 
 def band_codes_for_sample_rate(sample_rate_hz: float) -> tuple[str, ...]:
@@ -87,6 +90,35 @@ def validate_channel_code(channel: str, sample_rate_hz: float) -> str:
             f"but {_format_sample_rate(sample_rate_hz)} Hz allows {_format_code_list(allowed_codes)}"
         )
     return normalized
+
+
+def validate_data_quality_indicator(data_quality: str) -> str:
+    """Return a normalized miniSEED data quality indicator or raise ValueError."""
+
+    normalized = data_quality.strip().upper()
+    if normalized not in MINISEED_DATA_QUALITY_INDICATORS:
+        allowed = ", ".join(MINISEED_DATA_QUALITY_INDICATORS)
+        raise ValueError(
+            "data_quality must be one of the miniSEED data quality indicators "
+            f"{allowed}; got {data_quality!r}"
+        )
+    return normalized
+
+
+def validate_sampling_frequency_hz(sampling_frequency_hz: float) -> float:
+    """Return a positive sampling frequency in Hz or raise ValueError."""
+
+    try:
+        frequency = float(sampling_frequency_hz)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(
+            f"sampling_frequency_hz must be a positive finite value; got {sampling_frequency_hz!r}"
+        ) from exc
+    if not isfinite(frequency) or frequency <= 0:
+        raise ValueError(
+            f"sampling_frequency_hz must be a positive finite value; got {sampling_frequency_hz!r}"
+        )
+    return frequency
 
 
 def _period_band_code(
