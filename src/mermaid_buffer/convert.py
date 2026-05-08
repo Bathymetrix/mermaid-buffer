@@ -20,7 +20,7 @@ from obspy import Trace, UTCDateTime
 
 from mermaid_buffer.seed_codes import validate_channel_code
 
-SAMPLING_RATE_HZ = 40.01406
+DEFAULT_SAMPLING_FREQUENCY_HZ = 40.01406
 RAW_DTYPE = np.dtype("<i4")
 
 DEFAULT_NETWORK = "MH"
@@ -200,7 +200,7 @@ def make_output_path(
     network: str = DEFAULT_NETWORK,
     location: str = DEFAULT_LOCATION,
     channel: str = DEFAULT_CHANNEL,
-    sampling_frequency_hz: float = SAMPLING_RATE_HZ,
+    sampling_frequency_hz: float = DEFAULT_SAMPLING_FREQUENCY_HZ,
 ) -> Path:
     """Build the flat miniSEED output path for one source file."""
 
@@ -218,7 +218,7 @@ def build_trace(
     network: str = DEFAULT_NETWORK,
     location: str = DEFAULT_LOCATION,
     channel: str = DEFAULT_CHANNEL,
-    sampling_frequency_hz: float = SAMPLING_RATE_HZ,
+    sampling_frequency_hz: float = DEFAULT_SAMPLING_FREQUENCY_HZ,
     data_quality: str = DEFAULT_DATA_QUALITY,
 ) -> Trace:
     """Create an ObsPy Trace with miniSEED metadata."""
@@ -244,7 +244,7 @@ def convert_segment(
     network: str = DEFAULT_NETWORK,
     location: str = DEFAULT_LOCATION,
     channel: str = DEFAULT_CHANNEL,
-    sampling_frequency_hz: float = SAMPLING_RATE_HZ,
+    sampling_frequency_hz: float = DEFAULT_SAMPLING_FREQUENCY_HZ,
     data_quality: str = DEFAULT_DATA_QUALITY,
 ) -> Path:
     """Convert one raw waveform segment to one miniSEED file."""
@@ -287,7 +287,7 @@ def convert_tree(
     network: str = DEFAULT_NETWORK,
     location: str = DEFAULT_LOCATION,
     channel: str = DEFAULT_CHANNEL,
-    sampling_frequency_hz: float = SAMPLING_RATE_HZ,
+    sampling_frequency_hz: float = DEFAULT_SAMPLING_FREQUENCY_HZ,
     data_quality: str = DEFAULT_DATA_QUALITY,
     *,
     progress_callback: Callable[[int, int, SegmentInfo, Path], None] | None = None,
@@ -338,7 +338,7 @@ def convert_tree(
 
 def classify_transition(
     delta_seconds: float,
-    sampling_frequency_hz: float = SAMPLING_RATE_HZ,
+    sampling_frequency_hz: float = DEFAULT_SAMPLING_FREQUENCY_HZ,
 ) -> str:
     """Classify a transition delta as adjacent, gap, or overlap."""
 
@@ -353,7 +353,7 @@ def classify_transition(
 def transition_record(
     previous: SegmentInfo,
     next_segment: SegmentInfo,
-    sampling_frequency_hz: float = SAMPLING_RATE_HZ,
+    sampling_frequency_hz: float = DEFAULT_SAMPLING_FREQUENCY_HZ,
 ) -> dict[str, object]:
     """Build one JSON-serializable transition record."""
 
@@ -379,7 +379,7 @@ def transition_record(
 
 def transition_records(
     segments: Iterable[SegmentInfo],
-    sampling_frequency_hz: float = SAMPLING_RATE_HZ,
+    sampling_frequency_hz: float = DEFAULT_SAMPLING_FREQUENCY_HZ,
 ) -> list[dict[str, object]]:
     """Build transition records for consecutive sorted segments."""
 
@@ -396,7 +396,7 @@ def write_transition_log(
     output_root: str | Path,
     filename: str = DEFAULT_TRANSITION_LOG_NAME,
     *,
-    sampling_frequency_hz: float = SAMPLING_RATE_HZ,
+    sampling_frequency_hz: float = DEFAULT_SAMPLING_FREQUENCY_HZ,
 ) -> Path:
     """Write canonical JSONL transition records to the output root."""
 
@@ -431,7 +431,7 @@ def write_skipped_log(
 
 def _last_sample_time(
     segment: SegmentInfo,
-    sampling_frequency_hz: float = SAMPLING_RATE_HZ,
+    sampling_frequency_hz: float = DEFAULT_SAMPLING_FREQUENCY_HZ,
 ) -> UTCDateTime:
     if segment.npts <= 0:
         return segment.starttime

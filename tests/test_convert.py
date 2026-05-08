@@ -15,7 +15,7 @@ from mermaid_buffer import (
 )
 from mermaid_buffer.cli import build_parser, main
 from mermaid_buffer.convert import (
-    SAMPLING_RATE_HZ,
+    DEFAULT_SAMPLING_FREQUENCY_HZ,
     SegmentInfo,
     build_trace,
     classify_transition,
@@ -30,7 +30,7 @@ from mermaid_buffer.seed_codes import band_code
 
 def test_package_root_exposes_deliberate_v1_public_api():
     assert set(mermaid_buffer.__all__) == {
-        "SAMPLING_RATE_HZ",
+        "DEFAULT_SAMPLING_FREQUENCY_HZ",
         "__version__",
         "band_codes_for_sample_rate",
         "validate_channel_code",
@@ -88,8 +88,8 @@ def test_reading_little_endian_int32_binary_data(tmp_path):
     np.testing.assert_array_equal(samples, expected)
 
 
-def test_fixed_sampling_rate_constant():
-    assert SAMPLING_RATE_HZ == 40.01406
+def test_default_sampling_frequency_constant():
+    assert DEFAULT_SAMPLING_FREQUENCY_HZ == 40.01406
 
 
 def test_sampling_frequency_validation_rejects_invalid_values():
@@ -113,7 +113,7 @@ def test_data_quality_validation_rejects_invalid_indicators(indicator):
 
 
 def test_band_codes_for_mermaid_sampling_rate():
-    assert band_codes_for_sample_rate(SAMPLING_RATE_HZ) == ("B", "S")
+    assert band_codes_for_sample_rate(DEFAULT_SAMPLING_FREQUENCY_HZ) == ("B", "S")
 
 
 @pytest.mark.parametrize(
@@ -140,31 +140,31 @@ def test_l_band_tolerance_takes_precedence_over_m_band_range():
 
 
 def test_band_code_uses_corner_period_when_sample_rate_is_ambiguous():
-    assert band_code(SAMPLING_RATE_HZ, corner_period_seconds=10) == "B"
-    assert band_code(SAMPLING_RATE_HZ, corner_period_seconds=9.999) == "S"
+    assert band_code(DEFAULT_SAMPLING_FREQUENCY_HZ, corner_period_seconds=10) == "B"
+    assert band_code(DEFAULT_SAMPLING_FREQUENCY_HZ, corner_period_seconds=9.999) == "S"
 
     with pytest.raises(ValueError, match="corner_period_seconds is required"):
-        band_code(SAMPLING_RATE_HZ)
+        band_code(DEFAULT_SAMPLING_FREQUENCY_HZ)
 
 
 def test_channel_code_validation_rejects_invalid_band_code():
-    assert validate_channel_code("BDH", SAMPLING_RATE_HZ) == "BDH"
-    assert validate_channel_code("bdh", SAMPLING_RATE_HZ) == "BDH"
-    assert validate_channel_code("SHZ", SAMPLING_RATE_HZ) == "SHZ"
+    assert validate_channel_code("BDH", DEFAULT_SAMPLING_FREQUENCY_HZ) == "BDH"
+    assert validate_channel_code("bdh", DEFAULT_SAMPLING_FREQUENCY_HZ) == "BDH"
+    assert validate_channel_code("SHZ", DEFAULT_SAMPLING_FREQUENCY_HZ) == "SHZ"
     assert validate_channel_code("MHZ", 5.0) == "MHZ"
 
     with pytest.raises(ValueError, match="40.01406 Hz allows B or S"):
-        validate_channel_code("MHZ", SAMPLING_RATE_HZ)
+        validate_channel_code("MHZ", DEFAULT_SAMPLING_FREQUENCY_HZ)
 
 
 def test_transition_classification_adjacent_gap_overlap():
     start = UTCDateTime(2018, 12, 6, 3, 6, 14, 450000)
     previous = _segment("previous", start, 10)
-    expected_next = start + 10 / SAMPLING_RATE_HZ
+    expected_next = start + 10 / DEFAULT_SAMPLING_FREQUENCY_HZ
 
     adjacent = transition_record(previous, _segment("adjacent", expected_next, 5))
-    gap = transition_record(previous, _segment("gap", expected_next + 1 / SAMPLING_RATE_HZ, 5))
-    overlap = transition_record(previous, _segment("overlap", expected_next - 1 / SAMPLING_RATE_HZ, 5))
+    gap = transition_record(previous, _segment("gap", expected_next + 1 / DEFAULT_SAMPLING_FREQUENCY_HZ, 5))
+    overlap = transition_record(previous, _segment("overlap", expected_next - 1 / DEFAULT_SAMPLING_FREQUENCY_HZ, 5))
 
     assert adjacent["kind"] == "adjacent"
     assert gap["kind"] == "gap"
@@ -172,7 +172,7 @@ def test_transition_classification_adjacent_gap_overlap():
 
 
 def test_transition_classification_tolerance_edges():
-    tolerance = 0.5 / SAMPLING_RATE_HZ
+    tolerance = 0.5 / DEFAULT_SAMPLING_FREQUENCY_HZ
 
     assert classify_transition(0.0) == "adjacent"
     assert classify_transition(tolerance) == "adjacent"
@@ -216,7 +216,7 @@ def test_mseed_metadata_includes_dataquality_r(tmp_path):
     assert written.stats.station == "P0023"
     assert written.stats.location == "20"
     assert written.stats.channel == "BDH"
-    assert written.stats.sampling_rate == pytest.approx(SAMPLING_RATE_HZ)
+    assert written.stats.sampling_rate == pytest.approx(DEFAULT_SAMPLING_FREQUENCY_HZ)
 
 
 def test_build_trace_accepts_custom_sampling_frequency_and_channel():

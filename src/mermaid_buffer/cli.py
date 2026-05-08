@@ -18,7 +18,7 @@ from mermaid_buffer.convert import (
     DEFAULT_DATA_QUALITY,
     DEFAULT_LOCATION,
     DEFAULT_NETWORK,
-    SAMPLING_RATE_HZ,
+    DEFAULT_SAMPLING_FREQUENCY_HZ,
     convert_tree,
     validate_data_quality_indicator,
     validate_sampling_frequency_hz,
@@ -75,7 +75,7 @@ def build_parser() -> argparse.ArgumentParser:
         "-fs",
         "--sampling-frequency",
         type=float,
-        default=SAMPLING_RATE_HZ,
+        default=DEFAULT_SAMPLING_FREQUENCY_HZ,
         metavar="HZ",
         help="sampling frequency in Hz to write into traces and use for transition timing",
     )

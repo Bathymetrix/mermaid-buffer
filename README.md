@@ -269,7 +269,11 @@ Adjacency uses a tolerance of half a sample:
 The package root exposes only the small validation API intended for v1 support:
 
 ```python
-from mermaid_buffer import band_codes_for_sample_rate, validate_channel_code
+from mermaid_buffer import (
+    DEFAULT_SAMPLING_FREQUENCY_HZ,
+    band_codes_for_sample_rate,
+    validate_channel_code,
+)
 ```
 
 The bundled `seed_codes.py` module exists to validate miniSEED metadata for this
