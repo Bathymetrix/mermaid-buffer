@@ -99,7 +99,7 @@ def validate_data_quality_indicator(data_quality: str) -> str:
     if normalized not in MINISEED_DATA_QUALITY_INDICATORS:
         allowed = ", ".join(MINISEED_DATA_QUALITY_INDICATORS)
         raise ValueError(
-            "data_quality must be one of the miniSEED data quality indicators "
+            "data quality must be one of the miniSEED data quality indicators "
             f"{allowed}; got {data_quality!r}"
         )
     return normalized

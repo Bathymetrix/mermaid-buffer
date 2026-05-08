@@ -115,7 +115,7 @@ def test_data_quality_validation_normalizes_valid_indicators(indicator):
 
 @pytest.mark.parametrize("indicator", ["", "X", "A", "RR"])
 def test_data_quality_validation_rejects_invalid_indicators(indicator):
-    with pytest.raises(ValueError, match="data_quality must be one of"):
+    with pytest.raises(ValueError, match="data quality must be one of"):
         validate_data_quality_indicator(indicator)
 
 
@@ -271,7 +271,7 @@ def test_convert_help_lists_metadata_defaults(capsys):
     assert "-n, --network NETWORK" in help_text
     assert "-c, --channel CHANNEL" in help_text
     assert "-l, --location LOCATION" in help_text
-    assert "--data_quality INDICATOR" in help_text
+    assert "-dq, --data-quality INDICATOR" in help_text
     assert "(default: MH)" in help_text
     assert "(default: 20)" in help_text
     assert "(default: BDH)" in help_text
@@ -306,7 +306,7 @@ def test_convert_parser_accepts_short_options(tmp_path):
             "00",
             "-fs",
             "20.0",
-            "--data_quality",
+            "-dq",
             "Q",
         ]
     )
@@ -560,7 +560,7 @@ def test_cli_accepts_custom_data_quality(tmp_path):
                 str(output_root),
                 "-s",
                 "P0023",
-                "--data_quality",
+                "--data-quality",
                 "q",
             ]
         )
@@ -613,10 +613,19 @@ def test_cli_rejects_nonpositive_sampling_frequency(capsys):
 
 def test_cli_rejects_invalid_data_quality(capsys):
     with pytest.raises(SystemExit) as exc:
-        main(["-i", "raw", "-o", "mseed", "-s", "P0023", "--data_quality", "X"])
+        main(["-i", "raw", "-o", "mseed", "-s", "P0023", "--data-quality", "X"])
 
     assert exc.value.code == 2
-    assert "data_quality must be one of" in capsys.readouterr().err
+    assert "data quality must be one of" in capsys.readouterr().err
+
+
+def test_cli_rejects_removed_underscore_data_quality_flag(capsys):
+    removed_flag = "--data" + "_quality"
+    with pytest.raises(SystemExit) as exc:
+        main(["-i", "raw", "-o", "mseed", "-s", "P0023", removed_flag, "R"])
+
+    assert exc.value.code == 2
+    assert f"unrecognized arguments: {removed_flag} R" in capsys.readouterr().err
 
 
 def _segment(name: str, starttime: UTCDateTime, npts: int) -> SegmentInfo:

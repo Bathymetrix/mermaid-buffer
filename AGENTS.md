@@ -40,7 +40,7 @@ buffer2mseed --input-root INPUT_ROOT --output-root OUTPUT_ROOT --sampling-freque
   - `-c`, `--channel`
   - `-l`, `--location`
 - Data quality option:
-  - `--data_quality`
+  - `-dq`, `--data-quality`
 - Sampling frequency option aliases:
   - `-fs`, `--sampling-frequency`
 

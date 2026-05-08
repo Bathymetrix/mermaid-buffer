@@ -99,7 +99,7 @@ buffer2mseed \
   --location 20 \
   --channel BDH \
   --sampling-frequency 40.01406 \
-  --data_quality R
+  --data-quality R
 ```
 
 CLI help and version:
@@ -154,14 +154,14 @@ alphanumeric characters. Its first letter is validated as a SEED waveform band
 code for the selected sampling frequency. At the default `40.01406 Hz`, `B` and
 `S` are valid while a channel such as `MHZ` is rejected.
 
-`--data_quality INDICATOR`
+`-dq, --data-quality INDICATOR`
 
 miniSEED data quality indicator. Default: `R`. The value is normalized to
 uppercase and must be one of `D`, `R`, `Q`, or `M`. This is written to
 `trace.stats.mseed.dataquality`.
 
 The raw input files have no header or metadata, so `--network`, `--station`,
-`--location`, `--channel`, and `--data_quality` do not select data from the
+`--location`, `--channel`, and `--data-quality` do not select data from the
 input. They label every output trace produced by that run.
 
 For example:
@@ -215,7 +215,7 @@ MH.P0023.20.BDH.2018-12-06T03_06_14.450000.mseed
 
 miniSEED metadata is written with ObsPy. The selected sampling frequency is
 written to `trace.stats.sampling_rate`, and the data quality indicator is set
-explicitly from `--data_quality`.
+explicitly from `--data-quality`.
 
 The CLI prints one progress line as each output is written, followed by a
 concise run summary:

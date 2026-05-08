@@ -104,7 +104,8 @@ def build_parser() -> argparse.ArgumentParser:
         help="location code to write into every output trace and filename",
     )
     parser.add_argument(
-        "--data_quality",
+        "-dq",
+        "--data-quality",
         default=DEFAULT_DATA_QUALITY,
         metavar="INDICATOR",
         help="miniSEED data quality indicator to write into every output trace",
