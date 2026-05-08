@@ -5,8 +5,9 @@ import numpy as np
 import pytest
 from obspy import UTCDateTime, read
 
+import mermaid_buffer
 from mermaid_buffer import (
-    band_code,
+    __version__,
     band_codes_for_sample_rate,
     validate_channel_code,
     validate_data_quality_indicator,
@@ -17,12 +18,26 @@ from mermaid_buffer.convert import (
     SAMPLING_RATE_HZ,
     SegmentInfo,
     build_trace,
+    classify_transition,
     convert_tree,
     make_output_path,
     parse_starttime_from_filename,
     read_raw_samples,
     transition_record,
 )
+from mermaid_buffer.seed_codes import band_code
+
+
+def test_package_root_exposes_deliberate_v1_public_api():
+    assert set(mermaid_buffer.__all__) == {
+        "SAMPLING_RATE_HZ",
+        "__version__",
+        "band_codes_for_sample_rate",
+        "validate_channel_code",
+        "validate_data_quality_indicator",
+        "validate_sampling_frequency_hz",
+    }
+    assert mermaid_buffer.__version__ == __version__
 
 
 def test_parse_starttime_with_fractional_seconds():
@@ -35,6 +50,21 @@ def test_parse_starttime_without_fractional_seconds():
     starttime = parse_starttime_from_filename("2018-11-03T10_53_50")
 
     assert starttime == UTCDateTime(2018, 11, 3, 10, 53, 50)
+
+
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "manual.pdf",
+        "2018-11-03T10:53:50",
+        "2018-11-03T10_53",
+        "2018-11-03T10_53_50.1",
+        "2018-13-03T10_53_50",
+    ],
+)
+def test_parse_starttime_rejects_malformed_timestamp_filenames(filename):
+    with pytest.raises(ValueError, match="UTC timestamp"):
+        parse_starttime_from_filename(filename)
 
 
 def test_output_filename_generation(tmp_path):
@@ -71,12 +101,15 @@ def test_sampling_frequency_validation_rejects_invalid_values():
         validate_sampling_frequency_hz("nan")
 
 
-def test_data_quality_validation_normalizes_valid_indicators():
-    assert validate_data_quality_indicator("r") == "R"
-    assert validate_data_quality_indicator(" Q ") == "Q"
+@pytest.mark.parametrize("indicator", ["D", "R", "Q", "M", "d", " r "])
+def test_data_quality_validation_normalizes_valid_indicators(indicator):
+    assert validate_data_quality_indicator(indicator) == indicator.strip().upper()
 
+
+@pytest.mark.parametrize("indicator", ["", "X", "A", "RR"])
+def test_data_quality_validation_rejects_invalid_indicators(indicator):
     with pytest.raises(ValueError, match="data_quality must be one of"):
-        validate_data_quality_indicator("X")
+        validate_data_quality_indicator(indicator)
 
 
 def test_band_codes_for_mermaid_sampling_rate():
@@ -115,6 +148,7 @@ def test_band_code_uses_corner_period_when_sample_rate_is_ambiguous():
 
 
 def test_channel_code_validation_rejects_invalid_band_code():
+    assert validate_channel_code("BDH", SAMPLING_RATE_HZ) == "BDH"
     assert validate_channel_code("bdh", SAMPLING_RATE_HZ) == "BDH"
     assert validate_channel_code("SHZ", SAMPLING_RATE_HZ) == "SHZ"
     assert validate_channel_code("MHZ", 5.0) == "MHZ"
@@ -135,6 +169,20 @@ def test_transition_classification_adjacent_gap_overlap():
     assert adjacent["kind"] == "adjacent"
     assert gap["kind"] == "gap"
     assert overlap["kind"] == "overlap"
+
+
+def test_transition_classification_tolerance_edges():
+    tolerance = 0.5 / SAMPLING_RATE_HZ
+
+    assert classify_transition(0.0) == "adjacent"
+    assert classify_transition(tolerance) == "adjacent"
+    assert classify_transition(-tolerance) == "adjacent"
+    assert classify_transition(tolerance * 0.999999) == "adjacent"
+    assert classify_transition(-tolerance * 0.999999) == "adjacent"
+    assert classify_transition(tolerance * 1.000001) == "gap"
+    assert classify_transition(-tolerance * 1.000001) == "overlap"
+    assert classify_transition(1.0) == "gap"
+    assert classify_transition(-1.0) == "overlap"
 
 
 def test_transition_record_uses_custom_sampling_frequency():
@@ -209,6 +257,7 @@ def test_convert_help_lists_metadata_defaults(capsys):
 
     help_text = capsys.readouterr().out
     assert "-i, --input-root INPUT_ROOT" in help_text
+    assert "--version" in help_text
     assert "-o, --output-root OUTPUT_ROOT" in help_text
     assert "-fs, --sampling-frequency HZ" in help_text
     assert "-s, --station STATION" in help_text
@@ -221,6 +270,14 @@ def test_convert_help_lists_metadata_defaults(capsys):
     assert "(default: BDH)" in help_text
     assert "(default: 40.01406)" in help_text
     assert "(default: R)" in help_text
+
+
+def test_cli_version_reports_package_version(capsys):
+    with pytest.raises(SystemExit) as exc:
+        main(["--version"])
+
+    assert exc.value.code == 0
+    assert f"buffer2mseed {__version__}" in capsys.readouterr().out
 
 
 def test_convert_parser_accepts_short_options(tmp_path):
@@ -299,6 +356,77 @@ def test_convert_tree_uses_custom_data_quality_for_outputs(tmp_path):
     assert written.stats.mseed.dataquality == "Q"
 
 
+def test_convert_tree_accepts_timestamp_filenames_with_and_without_fractional_seconds(tmp_path):
+    input_root = tmp_path / "raw"
+    output_root = tmp_path / "mseed"
+    input_root.mkdir()
+    np.array([1, 2], dtype="<i4").tofile(input_root / "2018-11-03T10_53_50")
+    np.array([3, 4], dtype="<i4").tofile(input_root / "2018-11-03T10_53_51.250000")
+
+    result = convert_tree(input_root=input_root, output_root=output_root, station="P0023")
+
+    assert [path.name for path in result.output_paths] == [
+        "MH.P0023.20.BDH.2018-11-03T10_53_50.mseed",
+        "MH.P0023.20.BDH.2018-11-03T10_53_51.250000.mseed",
+    ]
+
+
+def test_convert_tree_skips_and_logs_invalid_raw_byte_counts(tmp_path):
+    input_root = tmp_path / "raw"
+    output_root = tmp_path / "mseed"
+    input_root.mkdir()
+    invalid_files = {
+        "2018-11-03T10_53_50": b"",
+        "2018-11-03T10_53_51": b"a",
+        "2018-11-03T10_53_52": b"ab",
+        "2018-11-03T10_53_53": b"abc",
+        "2018-11-03T10_53_54": b"abcde",
+    }
+    for filename, payload in invalid_files.items():
+        (input_root / filename).write_bytes(payload)
+
+    result = convert_tree(input_root=input_root, output_root=output_root, station="P0023")
+
+    assert result.output_paths == []
+    assert len(result.skipped_files) == len(invalid_files)
+    skipped_records = [
+        json.loads(line)
+        for line in result.skipped_log_path.read_text(encoding="utf-8").splitlines()
+    ]
+    assert {Path(record["file"]).name for record in skipped_records} == set(invalid_files)
+    assert any("Raw file is empty" in record["reason"] for record in skipped_records)
+    assert sum(
+        "Raw file size is not divisible by 4 bytes" in record["reason"]
+        for record in skipped_records
+    ) == 4
+
+
+def test_convert_tree_skips_and_logs_malformed_timestamp_filenames(tmp_path):
+    input_root = tmp_path / "raw"
+    output_root = tmp_path / "mseed"
+    input_root.mkdir()
+    for filename in [
+        "manual.pdf",
+        "2018-11-03T10:53:50",
+        "2018-11-03T10_53_50.1",
+    ]:
+        np.array([1, 2], dtype="<i4").tofile(input_root / filename)
+
+    result = convert_tree(input_root=input_root, output_root=output_root, station="P0023")
+
+    assert result.output_paths == []
+    skipped_records = [
+        json.loads(line)
+        for line in result.skipped_log_path.read_text(encoding="utf-8").splitlines()
+    ]
+    assert {Path(record["file"]).name for record in skipped_records} == {
+        "manual.pdf",
+        "2018-11-03T10:53:50",
+        "2018-11-03T10_53_50.1",
+    }
+    assert all("supported UTC timestamp" in record["reason"] for record in skipped_records)
+
+
 def test_convert_tree_logs_skipped_files_without_crashing(tmp_path):
     input_root = tmp_path / "raw"
     output_root = tmp_path / "mseed"
@@ -327,13 +455,37 @@ def test_convert_tree_logs_skipped_files_without_crashing(tmp_path):
         for record in skipped_records
     )
     assert any(
-        "Filename does not contain a timestamp separator: manual.pdf" in record["reason"]
+        "Filename is not a supported UTC timestamp" in record["reason"]
         for record in skipped_records
     )
     assert any(
         Path(record["file"]).name == ".DS_Store" and record["reason"] == "Dot file is skipped"
         for record in skipped_records
     )
+
+
+def test_convert_tree_prunes_hidden_directories(tmp_path):
+    input_root = tmp_path / "raw"
+    output_root = tmp_path / "mseed"
+    hidden_root = input_root / ".hidden"
+    hidden_root.mkdir(parents=True)
+    np.array([1, 2], dtype="<i4").tofile(input_root / "2018-11-03T10_53_50")
+    np.array([3, 4], dtype="<i4").tofile(hidden_root / "2018-11-03T10_53_51")
+
+    result = convert_tree(input_root=input_root, output_root=output_root, station="P0023")
+
+    assert len(result.output_paths) == 1
+    assert result.output_paths[0].name == "MH.P0023.20.BDH.2018-11-03T10_53_50.mseed"
+    skipped_records = [
+        json.loads(line)
+        for line in result.skipped_log_path.read_text(encoding="utf-8").splitlines()
+    ]
+    assert skipped_records == [
+        {
+            "file": str(hidden_root),
+            "reason": "Hidden directory is skipped",
+        }
+    ]
 
 
 def test_convert_tree_rewrites_expected_outputs_and_leaves_extra_files(tmp_path):

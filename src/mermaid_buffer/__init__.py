@@ -12,7 +12,6 @@ from mermaid_buffer.convert import (
     validate_sampling_frequency_hz,
 )
 from mermaid_buffer.seed_codes import (
-    band_code,
     band_codes_for_sample_rate,
     validate_channel_code,
 )
@@ -20,11 +19,11 @@ from mermaid_buffer.seed_codes import (
 __author__ = "Joel D. Simon"
 __license__ = "MIT"
 __copyright__ = "© 2026 Bathymetrix, LLC"
-__version__ = "0.1.0"
+__version__ = "1.0.0a1"
 
 __all__ = [
     "SAMPLING_RATE_HZ",
-    "band_code",
+    "__version__",
     "band_codes_for_sample_rate",
     "validate_channel_code",
     "validate_data_quality_indicator",

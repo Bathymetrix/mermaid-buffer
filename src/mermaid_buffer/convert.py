@@ -1,3 +1,9 @@
+# Bathymetrix™
+# https://bathymetrix.com
+# © 2026 Bathymetrix, LLC
+# Author: Joel D. Simon <jdsimon@bathymetrix.com>
+# SPDX-License-Identifier: MIT
+
 """Raw MERMAID circular-buffer waveform conversion."""
 
 from __future__ import annotations
@@ -6,6 +12,7 @@ from dataclasses import dataclass
 import json
 from math import isfinite
 from pathlib import Path
+import re
 from typing import Callable, Iterable
 
 import numpy as np
@@ -23,6 +30,10 @@ DEFAULT_DATA_QUALITY = "R"
 DEFAULT_TRANSITION_LOG_NAME = "buffer2mseed_transition_records.jsonl"
 DEFAULT_SKIPPED_LOG_NAME = "buffer2mseed_skipped_files.jsonl"
 MINISEED_DATA_QUALITY_INDICATORS = ("D", "R", "Q", "M")
+_SOURCE_TIMESTAMP_PATTERN = re.compile(
+    r"^\d{4}-\d{2}-\d{2}T\d{2}_\d{2}_\d{2}(?:\.\d{6})?$"
+)
+_SOURCE_TIMESTAMP_GRAMMAR = "YYYY-MM-DDTHH_MM_SS or YYYY-MM-DDTHH_MM_SS.ffffff"
 
 
 @dataclass(frozen=True)
@@ -67,8 +78,11 @@ def parse_starttime_from_filename(path: str | Path) -> UTCDateTime:
     """Parse a UTC start time from a raw MERMAID filename."""
 
     source_timestamp = Path(path).name
-    if "T" not in source_timestamp:
-        raise ValueError(f"Filename does not contain a timestamp separator: {source_timestamp}")
+    if not _SOURCE_TIMESTAMP_PATTERN.fullmatch(source_timestamp):
+        raise ValueError(
+            "Filename is not a supported UTC timestamp "
+            f"({_SOURCE_TIMESTAMP_GRAMMAR}): {source_timestamp}"
+        )
 
     date_part, time_part = source_timestamp.split("T", maxsplit=1)
     normalized = f"{date_part}T{time_part.replace('_', ':')}"
@@ -89,6 +103,8 @@ def count_raw_samples(path: str | Path) -> int:
 
     file_size = Path(path).stat().st_size
     item_size = RAW_DTYPE.itemsize
+    if file_size == 0:
+        raise ValueError(f"Raw file is empty: {path}")
     if file_size % item_size:
         raise ValueError(f"Raw file size is not divisible by {item_size} bytes: {path}")
     return file_size // item_size
@@ -135,26 +151,38 @@ def discover_input_files(input_root: str | Path) -> DiscoveryResult:
     root = Path(input_root)
     segments: list[SegmentInfo] = []
     skipped_files: list[SkippedFile] = []
-    for path in root.rglob("*"):
-        if not path.is_file():
-            continue
-        if path.name.startswith("."):
-            skipped_files.append(SkippedFile(path=path, reason="Dot file is skipped"))
-            continue
-        try:
-            starttime = parse_starttime_from_filename(path)
-            npts = count_raw_samples(path)
-        except (OSError, ValueError) as exc:
-            skipped_files.append(SkippedFile(path=path, reason=str(exc)))
-            continue
-        segments.append(
-            SegmentInfo(
-                path=path,
-                source_timestamp=path.name,
-                starttime=starttime,
-                npts=npts,
+    for current_root, dirnames, filenames in root.walk():
+        hidden_dirnames = sorted(dirname for dirname in dirnames if dirname.startswith("."))
+        for dirname in hidden_dirnames:
+            skipped_files.append(
+                SkippedFile(
+                    path=current_root / dirname,
+                    reason="Hidden directory is skipped",
+                )
             )
-        )
+        dirnames[:] = [dirname for dirname in dirnames if not dirname.startswith(".")]
+
+        for filename in filenames:
+            path = current_root / filename
+            if filename.startswith("."):
+                skipped_files.append(SkippedFile(path=path, reason="Dot file is skipped"))
+                continue
+            if not path.is_file():
+                continue
+            try:
+                starttime = parse_starttime_from_filename(path)
+                npts = count_raw_samples(path)
+            except (OSError, ValueError) as exc:
+                skipped_files.append(SkippedFile(path=path, reason=str(exc)))
+                continue
+            segments.append(
+                SegmentInfo(
+                    path=path,
+                    source_timestamp=path.name,
+                    starttime=starttime,
+                    npts=npts,
+                )
+            )
 
     return DiscoveryResult(
         segments=sorted(

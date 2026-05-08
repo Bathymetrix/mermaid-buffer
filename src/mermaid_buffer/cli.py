@@ -12,6 +12,7 @@ import argparse
 from pathlib import Path
 from typing import Sequence
 
+from mermaid_buffer import __version__
 from mermaid_buffer.convert import (
     DEFAULT_CHANNEL,
     DEFAULT_DATA_QUALITY,
@@ -49,6 +50,12 @@ def build_parser() -> argparse.ArgumentParser:
         prog="buffer2mseed",
         description="Convert raw MERMAID circular-buffer int32 waveform files to miniSEED.",
         formatter_class=_DefaultsHelpFormatter,
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
+        help="show the package version and exit",
     )
     parser.add_argument(
         "-i",

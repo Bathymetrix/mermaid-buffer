@@ -1,10 +1,10 @@
-# Bathymetrix
+# Bathymetrix™
 # https://bathymetrix.com
-# Copyright 2026 Bathymetrix, LLC
+# © 2026 Bathymetrix, LLC
 # Author: Joel D. Simon <jdsimon@bathymetrix.com>
 # SPDX-License-Identifier: MIT
 
-"""SEED channel-code helpers."""
+"""Internal SEED channel-code helpers for miniSEED metadata validation."""
 
 from __future__ import annotations
 

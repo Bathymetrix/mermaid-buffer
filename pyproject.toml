@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mermaid-buffer"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Convert raw MERMAID circular-buffer int32 waveform files to miniSEED."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -12,14 +12,28 @@ license = { text = "MIT" }
 authors = [
   { name = "Joel D. Simon", email = "jdsimon@bathymetrix.com" }
 ]
-dependencies = [
-  "numpy",
-  "obspy"
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering",
 ]
+dependencies = [
+  "numpy>=2.4",
+  "obspy>=1.5"
+]
+
+[project.urls]
+Homepage = "https://github.com/Bathymetrix/mermaid-buffer"
+Repository = "https://github.com/Bathymetrix/mermaid-buffer"
+Issues = "https://github.com/Bathymetrix/mermaid-buffer/issues"
 
 [project.optional-dependencies]
 dev = [
-  "pytest"
+  "pytest>=9"
 ]
 
 [project.scripts]
@@ -27,6 +41,9 @@ buffer2mseed = "mermaid_buffer.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.dynamic]
+version = { attr = "mermaid_buffer.__version__" }
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
