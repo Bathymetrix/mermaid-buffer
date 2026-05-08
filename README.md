@@ -36,7 +36,7 @@ Pass `-fs` or `--sampling-frequency` to use a different positive value in Hz. Th
 
 ## What It Does Not Do
 
-`mermaid-buffer` does not do time correction, event analysis, DET/REQ logic, interpolation, gap filling, trace merging, or continuity forcing. It also does not import from or imitate `mermaid-records` parsing/normalization architecture, and it does not add switches or special cases to `automaid`.
+`mermaid-buffer` does not do time correction, event analysis, DET/REQ logic, interpolation, gap filling, trace merging, or continuity forcing. It also does not import from or imitate [`mermaid-records`](https://github.com/Bathymetrix/mermaid-records) parsing/normalization architecture, and it does not add switches or special cases to [`automaid`](https://github.com/earthscopeoceans/automaid).
 
 ## Install
 
