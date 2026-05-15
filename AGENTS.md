@@ -175,3 +175,4 @@ buffer2mseed_skipped_files.jsonl
 ```
 
 - If the outer repo directory has recently been renamed, verify that `.venv` does not contain stale absolute paths before relying on installed console scripts.
+- When CI status matters, check GitHub Actions with the GitHub CLI if available and authenticated: use `gh run list --limit 5` to identify the relevant recent workflow run, then inspect it with `gh run view <run-id> --json status,conclusion,jobs` or an equivalent command. Report the workflow conclusion and each relevant matrix job conclusion, especially Python-version matrix entries. If `gh` is unavailable or unauthenticated, say so clearly and fall back to local verification.
