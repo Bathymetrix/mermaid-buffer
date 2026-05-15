@@ -5,7 +5,7 @@ Guidance for coding agents working in this repository.
 ## Collaboration Rules
 
 - The user handles staging and git-mutating commands. Do not run `git add`, `git commit`, `git branch`, `git checkout`, `git push`, or other git-mutating commands unless the user explicitly asks.
-- When a coherent work unit is complete, tell the user it is a good commit point and suggest a concise commit message.
+- When a coherent work unit is complete, tell the user it is a good commit point and suggest a concise commit message. Use a plain, sensible, capitalized message rather than a `<type>: message` convention.
 - When the thread has accumulated enough context that a fresh thread would be cleaner, tell the user it is a good new-thread point and provide a compact handoff summary.
 - Before changing files, briefly explain what will be edited and why.
 - Keep generated artifacts out of the repo. Remove accidental `__pycache__`, `.pytest_cache`, build output, and egg-info artifacts when they are produced during verification.

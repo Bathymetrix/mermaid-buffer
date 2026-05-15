@@ -289,15 +289,11 @@ small and only exposes the version:
 from mermaid_buffer import __version__
 ```
 
-Helper modules are importable from their submodules for tests, maintenance, and
-advanced internal use, but they are not a broad stable package-root API:
-
-```python
-from mermaid_buffer.seed_codes import validate_channel_code
-```
-
-These helpers exist to support the converter's miniSEED metadata validation and
-should not be treated as a standalone general-purpose SEED standards library.
+Helper modules may be imported from their submodules by tests, maintenance
+scripts, and advanced internal code, but those deep import paths are not stable
+public interfaces. These helpers exist to support the converter's miniSEED
+metadata validation and should not be treated as a standalone general-purpose
+SEED standards library.
 
 ## Development
 
