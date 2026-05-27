@@ -1,4 +1,5 @@
 import json
+import tomllib
 from pathlib import Path
 
 import numpy as np
@@ -33,6 +34,15 @@ def test_package_root_exposes_deliberate_v1_public_api():
     assert mermaid_buffer.__version__ == __version__
     assert not hasattr(mermaid_buffer, "band_codes_for_sample_rate")
     assert not hasattr(mermaid_buffer, "DEFAULT_SAMPLING_FREQUENCY_HZ")
+
+
+def test_project_installs_only_mermaid_buffer_console_script():
+    pyproject_path = Path(__file__).resolve().parents[1] / "pyproject.toml"
+    pyproject = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
+
+    assert pyproject["project"]["scripts"] == {
+        "mermaid-buffer": "mermaid_buffer.cli:main",
+    }
 
 
 def test_seed_code_helpers_are_importable_from_submodule():
@@ -254,7 +264,7 @@ def test_build_trace_accepts_custom_data_quality(tmp_path):
     assert written.stats.mseed.dataquality == "Q"
 
 
-def test_convert_help_lists_metadata_defaults(capsys):
+def test_top_level_help_exposes_convert_subcommand(capsys):
     parser = build_parser()
 
     try:
@@ -263,8 +273,22 @@ def test_convert_help_lists_metadata_defaults(capsys):
         assert exc.code == 0
 
     help_text = capsys.readouterr().out
-    assert "-i, --input-root INPUT_ROOT" in help_text
+    assert "usage: mermaid-buffer" in help_text
     assert "-v, --version" in help_text
+    assert "convert" in help_text
+
+
+def test_convert_help_lists_metadata_defaults(capsys):
+    parser = build_parser()
+
+    try:
+        parser.parse_args(["convert", "--help"])
+    except SystemExit as exc:
+        assert exc.code == 0
+
+    help_text = capsys.readouterr().out
+    assert "usage: mermaid-buffer convert" in help_text
+    assert "-i, --input-root INPUT_ROOT" in help_text
     assert "-o, --output-root OUTPUT_ROOT" in help_text
     assert "-f, --sampling-frequency HZ" in help_text
     assert "-s, --station STATION" in help_text
@@ -284,7 +308,7 @@ def test_cli_version_reports_package_version(capsys):
         main(["--version"])
 
     assert exc.value.code == 0
-    assert f"buffer2mseed {__version__}" in capsys.readouterr().out
+    assert f"mermaid-buffer {__version__}" in capsys.readouterr().out
 
 
 def test_cli_accepts_short_version_option(capsys):
@@ -292,7 +316,7 @@ def test_cli_accepts_short_version_option(capsys):
         main(["-v"])
 
     assert exc.value.code == 0
-    assert f"buffer2mseed {__version__}" in capsys.readouterr().out
+    assert f"mermaid-buffer {__version__}" in capsys.readouterr().out
 
 
 def test_convert_parser_accepts_short_options(tmp_path):
@@ -300,6 +324,7 @@ def test_convert_parser_accepts_short_options(tmp_path):
 
     args = parser.parse_args(
         [
+            "convert",
             "-i",
             str(tmp_path / "in"),
             "-o",
@@ -537,6 +562,7 @@ def test_cli_accepts_custom_sampling_frequency_for_channel_validation(tmp_path):
     assert (
         main(
             [
+                "convert",
                 "-i",
                 str(input_root),
                 "-o",
@@ -562,6 +588,7 @@ def test_cli_accepts_custom_data_quality(tmp_path):
     assert (
         main(
             [
+                "convert",
                 "-i",
                 str(input_root),
                 "-o",
@@ -587,7 +614,7 @@ def test_cli_prints_processed_and_skipped_counts(tmp_path, capsys):
     np.array([5, 6], dtype="<i4").tofile(input_root / "2018-11-03T10_53_51")
     (input_root / "manual.pdf").write_bytes(b"%PDF-1.7\n")
 
-    assert main(["-i", str(input_root), "-o", str(output_root), "-s", "P0023"]) == 0
+    assert main(["convert", "-i", str(input_root), "-o", str(output_root), "-s", "P0023"]) == 0
 
     stdout = capsys.readouterr().out
     assert (
@@ -605,7 +632,7 @@ def test_cli_prints_processed_and_skipped_counts(tmp_path, capsys):
 
 def test_cli_rejects_channel_band_code_for_sampling_rate(capsys):
     with pytest.raises(SystemExit) as exc:
-        main(["-i", "raw", "-o", "mseed", "-s", "P0023", "-c", "MHZ"])
+        main(["convert", "-i", "raw", "-o", "mseed", "-s", "P0023", "-c", "MHZ"])
 
     assert exc.value.code == 2
     assert "Channel code 'MHZ' has band code 'M'" in capsys.readouterr().err
@@ -613,7 +640,7 @@ def test_cli_rejects_channel_band_code_for_sampling_rate(capsys):
 
 def test_cli_rejects_nonpositive_sampling_frequency(capsys):
     with pytest.raises(SystemExit) as exc:
-        main(["-i", "raw", "-o", "mseed", "-s", "P0023", "-f", "0"])
+        main(["convert", "-i", "raw", "-o", "mseed", "-s", "P0023", "-f", "0"])
 
     assert exc.value.code == 2
     assert "sampling_frequency_hz must be a positive finite value" in capsys.readouterr().err
@@ -621,7 +648,7 @@ def test_cli_rejects_nonpositive_sampling_frequency(capsys):
 
 def test_cli_rejects_invalid_data_quality(capsys):
     with pytest.raises(SystemExit) as exc:
-        main(["-i", "raw", "-o", "mseed", "-s", "P0023", "--data-quality", "X"])
+        main(["convert", "-i", "raw", "-o", "mseed", "-s", "P0023", "--data-quality", "X"])
 
     assert exc.value.code == 2
     assert "data quality must be one of" in capsys.readouterr().err
@@ -630,7 +657,7 @@ def test_cli_rejects_invalid_data_quality(capsys):
 def test_cli_rejects_removed_underscore_data_quality_flag(capsys):
     removed_flag = "--data" + "_quality"
     with pytest.raises(SystemExit) as exc:
-        main(["-i", "raw", "-o", "mseed", "-s", "P0023", removed_flag, "R"])
+        main(["convert", "-i", "raw", "-o", "mseed", "-s", "P0023", removed_flag, "R"])
 
     assert exc.value.code == 2
     assert f"unrecognized arguments: {removed_flag} R" in capsys.readouterr().err

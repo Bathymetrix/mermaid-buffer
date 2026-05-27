@@ -15,7 +15,7 @@ Guidance for coding agents working in this repository.
 - Repository directory: `mermaid-buffer`.
 - Distribution/project name: `mermaid-buffer`.
 - Python import package: `mermaid_buffer`.
-- Console command: `buffer2mseed`.
+- Console command: `mermaid-buffer`.
 - Remove user-facing and source mentions of the previous package name.
 - Use lowercase `miniSEED` and `.mseed` in prose. Use `format="MSEED"` only when referring to the ObsPy API value.
 
@@ -73,17 +73,17 @@ Tests may import internal modules freely; test imports are not considered stable
 
 ## CLI Contract
 
-- The CLI is direct, with no `convert` subcommand.
+- The CLI uses the `convert` subcommand.
 - Supported command shape:
 
 ```bash
-buffer2mseed -i INPUT_ROOT -o OUTPUT_ROOT -f SAMPLING_FREQUENCY_HZ -s STATION
+mermaid-buffer convert -i INPUT_ROOT -o OUTPUT_ROOT -f SAMPLING_FREQUENCY_HZ -s STATION
 ```
 
 - Long options must also work:
 
 ```bash
-buffer2mseed --input-root INPUT_ROOT --output-root OUTPUT_ROOT --sampling-frequency SAMPLING_FREQUENCY_HZ --station STATION
+mermaid-buffer convert --input-root INPUT_ROOT --output-root OUTPUT_ROOT --sampling-frequency SAMPLING_FREQUENCY_HZ --station STATION
 ```
 
 - Metadata option aliases:
@@ -171,7 +171,8 @@ buffer2mseed_skipped_files.jsonl
 
 ```bash
 .venv/bin/python -m pytest
-.venv/bin/buffer2mseed --help
+.venv/bin/mermaid-buffer --help
+.venv/bin/mermaid-buffer convert --help
 ```
 
 - If the outer repo directory has recently been renamed, verify that `.venv` does not contain stale absolute paths before relying on installed console scripts.

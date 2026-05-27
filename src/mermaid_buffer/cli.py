@@ -47,7 +47,7 @@ class _DefaultsHelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="buffer2mseed",
+        prog="mermaid-buffer",
         description="Convert raw MERMAID circular-buffer int32 waveform files to miniSEED.",
         formatter_class=_DefaultsHelpFormatter,
     )
@@ -58,6 +58,21 @@ def build_parser() -> argparse.ArgumentParser:
         version=f"%(prog)s {__version__}",
         help="show the package version and exit",
     )
+
+    subparsers = parser.add_subparsers(dest="command", required=True)
+    convert_parser = subparsers.add_parser(
+        "convert",
+        help="convert raw MERMAID buffer files to miniSEED",
+        description="Convert raw MERMAID circular-buffer int32 waveform files to miniSEED.",
+        formatter_class=_DefaultsHelpFormatter,
+    )
+    _add_convert_arguments(convert_parser)
+    convert_parser.set_defaults(func=_convert_command, parser=convert_parser)
+
+    return parser
+
+
+def _add_convert_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "-i",
         "--input-root",
@@ -111,9 +126,6 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="INDICATOR",
         help="miniSEED data quality indicator to write into every output trace",
     )
-    parser.set_defaults(func=_convert_command)
-
-    return parser
 
 
 def _convert_command(args: argparse.Namespace) -> int:
@@ -148,11 +160,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     try:
-        args.sampling_frequency = validate_sampling_frequency_hz(args.sampling_frequency)
-        args.channel = validate_channel_code(args.channel, args.sampling_frequency)
-        args.data_quality = validate_data_quality_indicator(args.data_quality)
+        if args.command == "convert":
+            args.sampling_frequency = validate_sampling_frequency_hz(args.sampling_frequency)
+            args.channel = validate_channel_code(args.channel, args.sampling_frequency)
+            args.data_quality = validate_data_quality_indicator(args.data_quality)
     except ValueError as exc:
-        parser.error(str(exc))
+        args.parser.error(str(exc))
     return args.func(args)
 
 

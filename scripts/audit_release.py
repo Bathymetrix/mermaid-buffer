@@ -67,12 +67,12 @@ def main() -> int:
         )
 
     console_scripts = entry_points(group="console_scripts")
-    buffer_entry_points = [entry for entry in console_scripts if entry.name == "buffer2mseed"]
+    buffer_entry_points = [entry for entry in console_scripts if entry.name == "mermaid-buffer"]
     if buffer_entry_points:
         if not any(entry.value == "mermaid_buffer.cli:main" for entry in buffer_entry_points):
-            failures.append("buffer2mseed console script does not point to mermaid_buffer.cli:main")
+            failures.append("mermaid-buffer console script does not point to mermaid_buffer.cli:main")
     elif installed_version is not None:
-        failures.append("installed mermaid-buffer distribution has no buffer2mseed console script")
+        failures.append("installed mermaid-buffer distribution has no mermaid-buffer console script")
 
     if failures:
         print("Release audit failed:", file=sys.stderr)
@@ -80,7 +80,7 @@ def main() -> int:
             print(f"- {failure}", file=sys.stderr)
         return 1
 
-    print("Release audit passed: buffer2mseed is primary; root API is minimal; helpers import from submodules.")
+    print("Release audit passed: mermaid-buffer is primary; root API is minimal; helpers import from submodules.")
     return 0
 
 

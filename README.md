@@ -1,9 +1,9 @@
 # mermaid-buffer
 
 `mermaid-buffer` is a small, standalone v1 converter for semi-continuous raw
-MERMAID circular-buffer waveform data. The `buffer2mseed` command reads raw
-little-endian signed int32 waveform files and writes one miniSEED `.mseed` file
-per accepted input file.
+MERMAID circular-buffer waveform data. The `mermaid-buffer convert` command
+reads raw little-endian signed int32 waveform files and writes one miniSEED
+`.mseed` file per accepted input file.
 
 ## What It Converts
 
@@ -64,16 +64,16 @@ python -m pip install -e ".[dev]"
 
 ## Usage
 
-The direct CLI contract is:
+The canonical CLI contract is:
 
 ```bash
-buffer2mseed -i INPUT_ROOT -o OUTPUT_ROOT -s STATION
+mermaid-buffer convert -i INPUT_ROOT -o OUTPUT_ROOT -s STATION
 ```
 
 Long option form:
 
 ```bash
-buffer2mseed \
+mermaid-buffer convert \
   --input-root /path/to/raw/files \
   --output-root /path/to/mseed/output \
   --station P0023
@@ -82,7 +82,7 @@ buffer2mseed \
 Short option form:
 
 ```bash
-buffer2mseed \
+mermaid-buffer convert \
   -i /path/to/raw/files \
   -o /path/to/mseed/output \
   -s P0023
@@ -91,7 +91,7 @@ buffer2mseed \
 Full option form with defaults shown explicitly:
 
 ```bash
-buffer2mseed \
+mermaid-buffer convert \
   --input-root /path/to/raw/files \
   --output-root /path/to/mseed/output \
   --station P0023 \
@@ -105,9 +105,10 @@ buffer2mseed \
 CLI help and version:
 
 ```bash
-buffer2mseed --help
-buffer2mseed -v
-buffer2mseed --version
+mermaid-buffer --help
+mermaid-buffer convert --help
+mermaid-buffer -v
+mermaid-buffer --version
 ```
 
 ## CLI Options
@@ -168,7 +169,7 @@ input. They label every output trace produced by that run.
 For example:
 
 ```bash
-buffer2mseed \
+mermaid-buffer convert \
   --input-root raw \
   --output-root mseed \
   --station P0023 \
@@ -183,9 +184,9 @@ MH.P0023.20.BDF.2018-12-06T03_06_14.450000.mseed
 
 ## Run Model
 
-`buffer2mseed` is stateless. Each invocation is a full-input run over the
-current `--input-root`; it does not keep a manifest, compare against a previous
-run, or incrementally decide what changed.
+`mermaid-buffer convert` is stateless. Each invocation is a full-input run over
+the current `--input-root`; it does not keep a manifest, compare against a
+previous run, or incrementally decide what changed.
 
 Reruns rewrite same-name `.mseed` outputs. Reruns also rewrite both JSONL logs:
 
@@ -283,8 +284,8 @@ Adjacency uses a tolerance of half a sample:
 
 ## Python Imports
 
-The supported v1 interface is the `buffer2mseed` CLI. The package root is kept
-small and only exposes the version:
+The supported v1 interface is the `mermaid-buffer convert` CLI. The package
+root is kept small and only exposes the version:
 
 ```python
 from mermaid_buffer import __version__

@@ -37,7 +37,7 @@ dev = [
 ]
 
 [project.scripts]
-buffer2mseed = "mermaid_buffer.cli:main"
+mermaid-buffer = "mermaid_buffer.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
