@@ -9,7 +9,7 @@
 __author__ = "Joel D. Simon"
 __license__ = "MIT"
 __copyright__ = "© 2026 Bathymetrix, LLC"
-__version__ = "1.0.1"
+__version__ = "1.1.0"
 
 __all__ = [
     "__version__",

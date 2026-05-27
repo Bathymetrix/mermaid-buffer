@@ -77,7 +77,7 @@ Tests may import internal modules freely; test imports are not considered stable
 - Supported command shape:
 
 ```bash
-buffer2mseed -i INPUT_ROOT -o OUTPUT_ROOT -fs SAMPLING_FREQUENCY_HZ -s STATION
+buffer2mseed -i INPUT_ROOT -o OUTPUT_ROOT -f SAMPLING_FREQUENCY_HZ -s STATION
 ```
 
 - Long options must also work:
@@ -92,9 +92,9 @@ buffer2mseed --input-root INPUT_ROOT --output-root OUTPUT_ROOT --sampling-freque
   - `-c`, `--channel`
   - `-l`, `--location`
 - Data quality option:
-  - `-dq`, `--data-quality`
+  - `-q`, `--data-quality`
 - Sampling frequency option aliases:
-  - `-fs`, `--sampling-frequency`
+  - `-f`, `--sampling-frequency`
 
 - Defaults:
   - network: `MH`

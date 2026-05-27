@@ -106,6 +106,7 @@ CLI help and version:
 
 ```bash
 buffer2mseed --help
+buffer2mseed -v
 buffer2mseed --version
 ```
 
@@ -129,7 +130,7 @@ this directory.
 Required station code, for example `P0023`. This is written to
 `trace.stats.station` and included in the output filename.
 
-`-fs, --sampling-frequency HZ`
+`-f, --sampling-frequency HZ`
 
 Sampling frequency in Hz. Default: `40.01406`. This is written to
 `trace.stats.sampling_rate` and used for transition timing, adjacency tolerance,
@@ -154,7 +155,7 @@ alphanumeric characters. Its first letter is validated as a SEED waveform band
 code for the selected sampling frequency. At the default `40.01406 Hz`, `B` and
 `S` are valid while a channel such as `MHZ` is rejected.
 
-`-dq, --data-quality INDICATOR`
+`-q, --data-quality INDICATOR`
 
 miniSEED data quality indicator. Default: `R`. The value is normalized to
 uppercase and must be one of `D`, `R`, `Q`, or `M`. This is written to

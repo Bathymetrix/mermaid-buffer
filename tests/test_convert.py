@@ -264,14 +264,14 @@ def test_convert_help_lists_metadata_defaults(capsys):
 
     help_text = capsys.readouterr().out
     assert "-i, --input-root INPUT_ROOT" in help_text
-    assert "--version" in help_text
+    assert "-v, --version" in help_text
     assert "-o, --output-root OUTPUT_ROOT" in help_text
-    assert "-fs, --sampling-frequency HZ" in help_text
+    assert "-f, --sampling-frequency HZ" in help_text
     assert "-s, --station STATION" in help_text
     assert "-n, --network NETWORK" in help_text
     assert "-c, --channel CHANNEL" in help_text
     assert "-l, --location LOCATION" in help_text
-    assert "-dq, --data-quality INDICATOR" in help_text
+    assert "-q, --data-quality INDICATOR" in help_text
     assert "(default: MH)" in help_text
     assert "(default: 20)" in help_text
     assert "(default: BDH)" in help_text
@@ -282,6 +282,14 @@ def test_convert_help_lists_metadata_defaults(capsys):
 def test_cli_version_reports_package_version(capsys):
     with pytest.raises(SystemExit) as exc:
         main(["--version"])
+
+    assert exc.value.code == 0
+    assert f"buffer2mseed {__version__}" in capsys.readouterr().out
+
+
+def test_cli_accepts_short_version_option(capsys):
+    with pytest.raises(SystemExit) as exc:
+        main(["-v"])
 
     assert exc.value.code == 0
     assert f"buffer2mseed {__version__}" in capsys.readouterr().out
@@ -304,9 +312,9 @@ def test_convert_parser_accepts_short_options(tmp_path):
             "BDF",
             "-l",
             "00",
-            "-fs",
+            "-f",
             "20.0",
-            "-dq",
+            "-q",
             "Q",
         ]
     )
@@ -537,7 +545,7 @@ def test_cli_accepts_custom_sampling_frequency_for_channel_validation(tmp_path):
                 "P0023",
                 "-c",
                 "MHZ",
-                "-fs",
+                "-f",
                 "5.0",
             ]
         )
@@ -605,7 +613,7 @@ def test_cli_rejects_channel_band_code_for_sampling_rate(capsys):
 
 def test_cli_rejects_nonpositive_sampling_frequency(capsys):
     with pytest.raises(SystemExit) as exc:
-        main(["-i", "raw", "-o", "mseed", "-s", "P0023", "-fs", "0"])
+        main(["-i", "raw", "-o", "mseed", "-s", "P0023", "-f", "0"])
 
     assert exc.value.code == 2
     assert "sampling_frequency_hz must be a positive finite value" in capsys.readouterr().err

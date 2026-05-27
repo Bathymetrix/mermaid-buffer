@@ -52,6 +52,7 @@ def build_parser() -> argparse.ArgumentParser:
         formatter_class=_DefaultsHelpFormatter,
     )
     parser.add_argument(
+        "-v",
         "--version",
         action="version",
         version=f"%(prog)s {__version__}",
@@ -72,7 +73,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="directory for flat output .mseed files and JSONL logs",
     )
     parser.add_argument(
-        "-fs",
+        "-f",
         "--sampling-frequency",
         type=float,
         default=DEFAULT_SAMPLING_FREQUENCY_HZ,
@@ -104,7 +105,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="location code to write into every output trace and filename",
     )
     parser.add_argument(
-        "-dq",
+        "-q",
         "--data-quality",
         default=DEFAULT_DATA_QUALITY,
         metavar="INDICATOR",
