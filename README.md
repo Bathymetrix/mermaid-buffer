@@ -107,7 +107,6 @@ CLI help and version:
 ```bash
 mermaid-buffer --help
 mermaid-buffer convert --help
-mermaid-buffer -v
 mermaid-buffer --version
 ```
 

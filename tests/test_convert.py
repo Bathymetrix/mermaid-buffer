@@ -274,7 +274,8 @@ def test_top_level_help_exposes_convert_subcommand(capsys):
 
     help_text = capsys.readouterr().out
     assert "usage: mermaid-buffer" in help_text
-    assert "-v, --version" in help_text
+    assert "--version" in help_text
+    assert "-v, --version" not in help_text
     assert "convert" in help_text
 
 
@@ -311,12 +312,14 @@ def test_cli_version_reports_package_version(capsys):
     assert f"mermaid-buffer {__version__}" in capsys.readouterr().out
 
 
-def test_cli_accepts_short_version_option(capsys):
+def test_cli_rejects_short_version_option(capsys):
     with pytest.raises(SystemExit) as exc:
         main(["-v"])
 
-    assert exc.value.code == 0
-    assert f"mermaid-buffer {__version__}" in capsys.readouterr().out
+    assert exc.value.code == 2
+    captured = capsys.readouterr()
+    assert f"mermaid-buffer {__version__}" not in captured.out
+    assert "usage: mermaid-buffer" in captured.err
 
 
 def test_convert_parser_accepts_short_options(tmp_path):
