@@ -1,174 +1,202 @@
-# AGENTS.md
+# mermaid-buffer
 
-Guidance for coding agents working in this repository.
+These instructions supplement:
 
-## Collaboration Rules
+- the global Codex AGENTS (`~/.codex/AGENTS.md`)
+- the shared MERMAID AGENTS (`$MERMAID/AGENTS.md`)
 
-- The user handles staging and git-mutating commands. Do not run `git add`, `git commit`, `git branch`, `git checkout`, `git push`, or other git-mutating commands unless the user explicitly asks.
-- When a coherent work unit is complete, tell the user it is a good commit point and suggest a concise commit message. Use a plain, sensible, capitalized message rather than a `<type>: message` convention.
-- Any time you suggest a commit message also bump version (`major`, `minor`, or  `patch`) and alert user.
-- When the thread has accumulated enough context that a fresh thread would be cleaner, tell the user it is a good new-thread point and provide a compact handoff summary.
-- Before changing files, briefly explain what will be edited and why.
-- Keep generated artifacts out of the repo. Remove accidental `__pycache__`, `.pytest_cache`, build output, and egg-info artifacts when they are produced during verification.
+The shared MERMAID AGENTS are considered part of this repository's
+instructions.
 
-## Naming Rules
+If they cannot be located or read for any reason, stop and notify the user
+before making changes.
 
-- Repository directory: `mermaid-buffer`.
-- Distribution/project name: `mermaid-buffer`.
-- Python import package: `mermaid_buffer`.
-- Console command: `mermaid-buffer`.
-- Remove user-facing and source mentions of the previous package name.
-- Use lowercase `miniSEED` and `.mseed` in prose. Use `format="MSEED"` only when referring to the ObsPy API value.
+If instructions conflict, this file takes precedence.
 
-## Namespace Consolidation / Public API Discipline
+## Repository Scope
 
-AGENTS should keep future namespace consolidation in mind during all implementation and API decisions.
+`mermaid-buffer` converts raw MERMAID circular-buffer waveform files into
+miniSEED.
 
-This project may eventually become part of a larger unified namespace layout such as:
+This repository owns:
 
-```text
-src/mermaid_records/   -> src/mermaid/records/
-src/mermaid_timeline/  -> src/mermaid/timeline/
-src/mermaid_telemetry/ -> src/mermaid/telemetry/
-src/mermaid_gcmt/      -> src/mermaid/gcmt/
-```
+- raw waveform decoding;
+- metadata assignment required for miniSEED;
+- conversion logging;
+- transition analysis between adjacent waveform files.
 
-Therefore:
+It does **not** own:
 
-- prioritize stable CLI/file-format contracts over stable internal import paths
-- keep public Python API exposure intentionally small
-- avoid exposing internal helpers/classes/functions unless clearly intended as durable public API
-- avoid documenting deep import paths as stable interfaces
-- prefer CLI-driven workflows over broad import-driven workflows
+- waveform processing;
+- event detection;
+- timeline construction;
+- scientific interpretation;
+- acquisition inference;
+- catalog generation.
 
-Key philosophy:
+## Naming
 
-- The primary public contract is:
-  - CLI behavior
-  - documented file formats/schemas
-  - manifests/state behavior
-  - documented validation behavior
-- Internal Python module layout is NOT yet considered stable public API.
+Use the following canonical names throughout the repository:
 
-Guidelines:
+- repository: `mermaid-buffer`
+- Python package: `mermaid_buffer`
+- console command: `mermaid-buffer`
 
-- Avoid unnecessary re-exports in `__init__.py`.
-- Internal modules/functions/classes may be reorganized freely unless explicitly documented as public API.
-- Prefer stable CLI entry points and stable JSONL/file contracts over stable internal module paths.
-- Use centralized constants/helpers for package metadata where practical (package name, schema version, filenames, etc.) rather than scattering hardcoded package names throughout the codebase.
-- Do not over-engineer namespace-package machinery prematurely; just avoid choices that would make later migration painful.
-- Before exposing/importing/re-exporting new symbols publicly, consider whether doing so creates a long-term compatibility obligation.
-- When introducing new public APIs, consider whether they would remain sensible after a future migration from:
+Use lowercase `miniSEED` and `.mseed` in prose.
 
-```text
-mermaid_<thing>
-```
-
-to:
-
-```text
-mermaid.<thing>
-```
-
-Tests may import internal modules freely; test imports are not considered stable public API.
+Use `format="MSEED"` only when referring to the ObsPy API.
 
 ## CLI Contract
 
-- The CLI uses the `convert` subcommand.
-- Supported command shape:
+The supported command is:
 
-```bash
-mermaid-buffer convert -i INPUT_ROOT -o OUTPUT_ROOT -f SAMPLING_FREQUENCY_HZ -s STATION
+```text
+mermaid-buffer convert
 ```
 
-- Long options must also work:
+Supported options:
 
-```bash
-mermaid-buffer convert --input-root INPUT_ROOT --output-root OUTPUT_ROOT --sampling-frequency SAMPLING_FREQUENCY_HZ --station STATION
-```
+- `-i`, `--input-root`
+- `-o`, `--output-root`
+- `-f`, `--sampling-frequency`
+- `-s`, `--station`
+- `-n`, `--network`
+- `-l`, `--location`
+- `-c`, `--channel`
+- `-q`, `--data-quality`
 
-- Metadata option aliases:
-  - `-s`, `--station`
-  - `-n`, `--network`
-  - `-c`, `--channel`
-  - `-l`, `--location`
-- Data quality option:
-  - `-q`, `--data-quality`
-- Sampling frequency option aliases:
-  - `-f`, `--sampling-frequency`
+Defaults:
 
-- Defaults:
-  - network: `MH`
-  - location: `20`
-  - channel: `BDH`
-  - data quality: `R`
-  - sampling frequency: `40.01406`
-- Channel codes are supplied by the user or defaulted. They must be exactly three alphanumeric characters.
-- Sampling frequency is supplied by the user or defaulted. It must be a positive value in Hz.
-- Data quality is supplied by the user or defaulted. It must be one of the miniSEED data quality indicators `D`, `R`, `Q`, or `M`.
-- Validate the first channel letter as a SEED waveform band code for the selected sampling frequency before conversion. At the default `40.01406 Hz`, `B` and `S` are valid; reject a code like `MHZ` with a useful error.
-- Treat `mermaid-buffer` as a CLI converter, not a metadata utility library. The package root public API should stay minimal; only `__version__` is exported for v1.
+- network: `MH`
+- location: `20`
+- channel: `BDH`
+- data quality: `R`
+- sampling frequency: `40.01406`
+
+Validate:
+
+- channel codes are exactly three alphanumeric characters;
+- the first channel letter is compatible with the selected sampling
+  frequency;
+- sampling frequency is positive;
+- miniSEED data quality is one of `D`, `R`, `Q`, or `M`.
+
+Treat the CLI and generated files as the primary public interface.
+
+Keep the package's Python API intentionally minimal.
 
 ## Conversion Rules
 
-- Convert raw MERMAID circular-buffer waveform files to one `.mseed` file per input file.
-- Raw inputs are little-endian signed int32 samples only, NumPy dtype `<i4`.
-- Raw inputs have no header and no required extension.
-- The filename is the UTC start time of the first sample.
-- Support timestamps with and without fractional seconds, for example:
-  - `2018-12-06T03_06_14.450000`
-  - `2018-11-03T10_53_50`
-- Recursively discover files under `--input-root`.
-- Skip dot files instead of treating them as raw inputs.
-- Skip discovered files that cannot be parsed as raw inputs instead of crashing.
-- Log skipped files with the path and reason.
-- Use the default sampling frequency constant `40.01406`. Do not use `40` as a default or fallback.
-- Do not add time correction, event analysis, DET/REQ logic, interpolation, gap filling, merging, or continuity forcing.
-- Use ObsPy `Trace` and write with `trace.write(outpath, format="MSEED")`.
-- Write the selected sampling frequency to `trace.stats.sampling_rate`.
-- Set miniSEED data quality explicitly with `trace.stats.mseed = {"dataquality": DATA_QUALITY}`.
+Convert one raw waveform file into one `.mseed` file.
+
+Raw inputs are:
+
+- little-endian signed int32 (`<i4`);
+- headerless;
+- recursively discovered beneath the input root.
+
+The filename represents the UTC start time of the first sample.
+
+Support timestamps both with and without fractional seconds.
+
+Skip:
+
+- dot files;
+- files that cannot be parsed as valid waveform inputs.
+
+Log every skipped file together with the reason.
+
+Always use the requested sampling frequency (default `40.01406 Hz`).
+
+Do not introduce:
+
+- time correction;
+- interpolation;
+- gap filling;
+- merging;
+- continuity forcing;
+- event analysis;
+- DET/REQ logic.
+
+Use ObsPy `Trace` objects and write output with:
+
+```python
+trace.write(..., format="MSEED")
+```
+
+Populate:
+
+- `trace.stats.sampling_rate`
+- `trace.stats.mseed["dataquality"]`
 
 ## Output Rules
 
-- One input file produces exactly one output `.mseed`.
-- Conversion is stateless. Every run discovers the full current input tree.
-- Re-run conversion rewrites same-name output files and JSONL logs.
-- Do not check output directories for extra incorrect or outdated files, and do not prune them.
-- Do not enforce input/output directory separation.
-- Output filenames use:
+One input file always produces exactly one output `.mseed`.
+
+Conversion is stateless.
+
+Every run discovers the complete input tree and rewrites outputs having the
+same filename.
+
+Do not prune existing output directories.
+
+Do not require input and output directories to differ.
+
+Output filenames use:
 
 ```text
 NETWORK.STATION.LOCATION.CHANNEL.SOURCE_TIMESTAMP.mseed
 ```
 
-- Default example:
-
-```text
-MH.P0023.20.BDH.2018-12-06T03_06_14.450000.mseed
-```
-
-- Transition log filename:
+Transition log:
 
 ```text
 buffer2mseed_transition_records.jsonl
 ```
 
-- Skipped-file log filename:
+Skipped-file log:
 
 ```text
 buffer2mseed_skipped_files.jsonl
 ```
 
-- Skipped-file records include the skipped file path and reason.
-- Transition records sort discovered inputs by parsed start time and log every consecutive transition as `adjacent`, `gap`, or `overlap`.
-- Expected next start is `previous_starttime + previous_npts / sampling_frequency_hz`.
-- Adjacency tolerance is `0.5 / sampling_frequency_hz` seconds.
-- During conversion, the CLI prints one `[X/Y] INPUT_BASENAME -> OUTPUT_BASENAME.mseed` line per written file.
-- The CLI prints a concise processed/skipped file count.
+Transition records compare adjacent waveform files ordered by parsed start
+time.
+
+Classify transitions only as:
+
+- `adjacent`
+- `gap`
+- `overlap`
+
+Expected continuity is computed from:
+
+- previous start time;
+- previous sample count;
+- sampling frequency.
+
+Adjacency tolerance is:
+
+```text
+0.5 / sampling_frequency_hz
+```
+
+The CLI should report concise conversion progress together with processed and
+skipped file totals.
+
+## Public API
+
+The package root intentionally exports only:
+
+- `__version__`
+
+Avoid exposing internal helpers, modules, or classes as stable public API.
 
 ## Verification
 
-- Prefer the repo virtual environment when available:
+Prefer the repository virtual environment when available.
+
+Typical verification includes:
 
 ```bash
 .venv/bin/python -m pytest
@@ -176,5 +204,5 @@ buffer2mseed_skipped_files.jsonl
 .venv/bin/mermaid-buffer convert --help
 ```
 
-- If the outer repo directory has recently been renamed, verify that `.venv` does not contain stale absolute paths before relying on installed console scripts.
-- When CI status matters, check GitHub Actions with the GitHub CLI if available and authenticated: use `gh run list --limit 5` to identify the relevant recent workflow run, then inspect it with `gh run view <run-id> --json status,conclusion,jobs` or an equivalent command. Report the workflow conclusion and each relevant matrix job conclusion, especially Python-version matrix entries. If `gh` is unavailable or unauthenticated, say so clearly and fall back to local verification.
+If verifying CI status, prefer GitHub CLI when available and report relevant
+workflow and matrix results.
