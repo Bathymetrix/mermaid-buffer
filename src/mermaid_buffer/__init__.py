@@ -1,4 +1,4 @@
-# Bathymetrix™
+# Bathymetrix®
 # https://bathymetrix.com
 # © 2026 Bathymetrix, LLC
 # Author: Joel D. Simon <jdsimon@bathymetrix.com>

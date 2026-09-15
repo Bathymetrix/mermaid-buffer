@@ -27,7 +27,7 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/Bathymetrix/mermaid-buffer"
+Homepage = "https://bathymetrix.com"
 Repository = "https://github.com/Bathymetrix/mermaid-buffer"
 Issues = "https://github.com/Bathymetrix/mermaid-buffer/issues"
 

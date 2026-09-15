@@ -1,8 +1,4 @@
 #!/usr/bin/env python
-# Bathymetrix™
-# https://bathymetrix.com
-# © 2026 Bathymetrix, LLC
-# Author: Joel D. Simon <jdsimon@bathymetrix.com>
 # SPDX-License-Identifier: MIT
 
 """Release-readiness checks for the mermaid-buffer v1 interface."""
